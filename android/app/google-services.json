@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "282791341945",
+    "project_id": "flutter-simpsons",
+    "storage_bucket": "flutter-simpsons.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282791341945:android:7fa4e8a818039d19a209a8",
+        "android_client_info": {
+          "package_name": "com.example.simpsons_park"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "282791341945-eake5o342grpfgausue2v700s9c28324.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDkjLZKE9Xp98tUe7b4nlAONX_ta0RWBA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "282791341945-7747jdfqu4knd17q0h7h23uq3lfl6aeo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "282791341945-7km9p5r494sao82oadc51lrhribaa4oh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterSimpsons"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
