@@ -10,27 +10,25 @@ class RegisterForm extends StatelessWidget {
 
   Future<void> onSubmit(BuildContext context) async {
     try {
-      print("$_emailController.text, $_passwordController.text");
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: _emailController.text,
             password: _passwordController.text,
           );
-
       if(credential.user != null){
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Utilisateur créé avec l'ID : ${credential.user!.uid}")));
       }
-      print("Utilisateur créé avec l'ID : ${credential.user!.uid}");
-      // await FirebaseAuth.instance.signInWithCredential(credential as AuthCredential);
-      // final user = credential.user;
-      // print("Utilisateur connecté avec l'ID : ${user!.uid}");
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('The password provided is too weak.')));
       } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('The account already exists for that email.')));
       }
     } catch (e) {
       print(e);

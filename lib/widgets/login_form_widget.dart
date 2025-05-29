@@ -5,6 +5,10 @@ class LoginForm extends StatelessWidget {
 
   const LoginForm({super.key, required this.onSwitchToRegister});
 
+  // await FirebaseAuth.instance.signInWithCredential(credential as AuthCredential);
+  // final user = credential.user;
+  // print("Utilisateur connecté avec l'ID : ${user!.uid}");
+
   @override
   Widget build(BuildContext context) {
     return Padding(
