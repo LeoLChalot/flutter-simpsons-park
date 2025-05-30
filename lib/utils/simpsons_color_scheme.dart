@@ -56,7 +56,7 @@ final simpsonsTheme = ThemeData(
       borderSide: BorderSide(color: simpsonsColorScheme.primary, width: 2.0),
     ),
     enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: simpsonsColorScheme.outline ?? Colors.grey),
+      borderSide: BorderSide(color: simpsonsColorScheme.outline),
     ),
     labelStyle: TextStyle(color: simpsonsColorScheme.secondary),
   ),

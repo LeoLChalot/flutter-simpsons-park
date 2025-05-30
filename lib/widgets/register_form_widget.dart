@@ -1,39 +1,86 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-class RegisterForm extends StatelessWidget {
-  final VoidCallback onSwitchToLogin; // Callback pour basculer
+import '../services/auth_service.dart';
+
+class RegisterForm extends StatefulWidget {
+  final VoidCallback onSwitchToLogin;
+
+  const RegisterForm({super.key, required this.onSwitchToLogin});
+
+  @override
+  State<RegisterForm> createState() => _RegisterFormState();
+}
+
+class _RegisterFormState extends State<RegisterForm> {
+  final _authService = AuthService();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  RegisterForm({super.key, required this.onSwitchToLogin});
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-  Future<void> onSubmit(BuildContext context) async {
+  Future<void> onSubmit() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      print("$_emailController.text, $_passwordController.text");
-      final credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text,
-            password: _passwordController.text,
-          );
+      final credential = await _authService.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
-      if(credential.user != null){
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Utilisateur créé avec l'ID : ${credential.user!.uid}")));
+      if (!mounted) return;
+
+      if (credential.user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Utilisateur inscrit avec l\'ID : ${credential.user!.uid}',
+            ),
+          ),
+        );
+        if (kDebugMode) {
+          print("Utilisateur créé avec l'ID : ${credential.user!.uid}");
+        }
       }
-      print("Utilisateur créé avec l'ID : ${credential.user!.uid}");
-      // await FirebaseAuth.instance.signInWithCredential(credential as AuthCredential);
-      // final user = credential.user;
-      // print("Utilisateur connecté avec l'ID : ${user!.uid}");
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String message = 'Une erreur est survenue lors de l\'inscription.';
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        message = 'Le mot de passe fourni est trop faible.';
       } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+        message = 'Un compte existe déjà pour cet email.';
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      if (kDebugMode) {
+        print(e);
       }
     } catch (e) {
-      print(e);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Une erreur inattendue est survenue.')),
+      );
+      if (kDebugMode) {
+        print(e);
+      }
+
+
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -48,38 +95,45 @@ class RegisterForm extends StatelessWidget {
             'Inscription',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           TextField(
             controller: _emailController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Email',
               border: OutlineInputBorder(),
             ),
+            keyboardType: TextInputType.emailAddress,
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           TextField(
             controller: _passwordController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Mot de passe',
               border: OutlineInputBorder(),
             ),
             obscureText: true,
           ),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
           ElevatedButton(
-            onPressed: () {
-              print('Tentative d\'inscription');
-              onSubmit(context);
-            },
+            onPressed: _isLoading ? null : onSubmit,
             style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
             ),
-            child: Text('M\'inscrire'),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('M\'inscrire'),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           TextButton(
-            onPressed: onSwitchToLogin,
-            child: Text('Déjà un compte ? Se connecter'),
+            onPressed: widget.onSwitchToLogin, // Accéder via widget.
+            child: const Text('Déjà un compte ? Se connecter'),
           ),
         ],
       ),

@@ -2,10 +2,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:simpsons_park/pages/access_form_page.dart';
 import 'package:simpsons_park/pages/loading_page.dart';
+import 'package:simpsons_park/utils/auth_wrapper.dart';
 import 'package:simpsons_park/utils/routes.dart';
 import 'package:simpsons_park/utils/simpsons_color_scheme.dart';
 import 'apps/app_dashboard.dart';
-import 'apps/app_simpson.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -14,7 +14,7 @@ void main() async {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AppSimpson(),
+      home: AuthWrapper(),
       theme: simpsonsTheme,
       routes: {
         Routes.accessForm: (context) => const AccessFormPage(),
@@ -24,3 +24,4 @@ void main() async {
     ),
   );
 }
+
