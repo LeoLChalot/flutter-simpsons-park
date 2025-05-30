@@ -18,7 +18,7 @@ class _AppSimpsonState extends State<AppSimpson> {
 
   static const List<Widget> _pagesOptions = <Widget>[
     CharactersTab(),
-    EpisodesTab(),
+    // EpisodesTab(),
     SeasonsTab(),
   ];
 
@@ -40,8 +40,11 @@ class _AppSimpsonState extends State<AppSimpson> {
             icon: Icon(Icons.person),
             label: 'Personnages',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Episodes'),
-          BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Saisons'),
+          // BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Episodes'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.tv),
+              label: 'Saisons'
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[900],

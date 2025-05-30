@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simpsons_park/widgets/drawer_user.dart';
 
 import '../widgets/login_form_widget.dart';
 import '../widgets/register_form_widget.dart';
@@ -25,6 +26,7 @@ class _AccessFormPageState extends State<AccessFormPage> {
       appBar: AppBar(
         title: Text(_showLoginForm ? 'Page de Connexion' : 'Page d\'Inscription'),
       ),
+      drawer: DrawerUser(),
       body: Center(
         child: SingleChildScrollView(
           child: _showLoginForm

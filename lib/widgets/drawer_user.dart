@@ -64,6 +64,20 @@ class _DrawerUserState extends State<DrawerUser> {
             child: Center(child: Text('')),
           ),
           ListTile(
+            title: const Text('Accueil'),
+            onTap: () {
+              Navigator.pushNamed(context, Routes.loading);
+              Future.delayed(const Duration(seconds: 2), () {
+                if (!mounted) return;
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+                Navigator.pushNamed(context, Routes.home);
+              });
+            },
+            leading: const Icon(Icons.home),
+          ),
+          ListTile(
             title: const Text('Connexion'),
             onTap: () {
               Navigator.pushNamed(context, Routes.loading);

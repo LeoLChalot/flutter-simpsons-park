@@ -2,7 +2,7 @@ import 'package:simpsons_park/models/character_model.dart';
 import 'package:simpsons_park/models/season_model.dart';
 
 class Episode {
-  final Season season;
+  final int seasonNumber;
   final int episodeNumber;
   final String title;
   final String synopsis;
@@ -13,7 +13,7 @@ class Episode {
   final String imageUrl;
 
   Episode({
-    required this.season,
+    required this.seasonNumber,
     required this.episodeNumber,
     required this.title,
     required this.synopsis,
@@ -25,7 +25,7 @@ class Episode {
   });
 
   factory Episode.fromJson(Map<String, dynamic> json) {
-    final season = Season.fromJson(json['season']);
+    final seasonNumber = json['seasonNumber'];
     final episodeNumber = json['episodeNumber'];
     final title = json['title'];
     final synopsis = json['synopsis'];
@@ -39,7 +39,7 @@ class Episode {
     final imageUrl = json['imageUrl'];
 
     return Episode(
-    season: season,
+      seasonNumber: seasonNumber,
       episodeNumber: episodeNumber,
       title: title,
       synopsis: synopsis,
@@ -53,7 +53,7 @@ class Episode {
 
   Map<String, dynamic> toJson() {
     return {
-      'season': season,
+      'seasonNumber': seasonNumber,
       'episodeNumber': episodeNumber,
       'title': title,
       'synopsis': synopsis,
