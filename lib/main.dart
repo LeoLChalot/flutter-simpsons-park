@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:simpsons_park/apps/app_simpson.dart';
 import 'package:simpsons_park/pages/access_form_page.dart';
 import 'package:simpsons_park/pages/loading_page.dart';
-import 'package:simpsons_park/utils/auth_wrapper.dart';
 import 'package:simpsons_park/utils/routes.dart';
 import 'package:simpsons_park/utils/simpsons_color_scheme.dart';
 import 'apps/app_dashboard.dart';

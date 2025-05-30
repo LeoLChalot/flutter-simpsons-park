@@ -39,10 +39,12 @@ class _LoginFormState extends State<LoginForm> {
 
       final User? user = userCredential.user;
 
-      if (!mounted) return; // Vérifier si le widget est toujours monté
+      if (!mounted) return;
 
       if (user != null) {
-        print("Utilisateur connecté avec l'ID : ${user.uid}");
+        if (kDebugMode) {
+          print("Utilisateur connecté avec l'ID : ${user.uid}");
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Connecté en tant que : ${user.email} (ID: ${user.uid})'),
