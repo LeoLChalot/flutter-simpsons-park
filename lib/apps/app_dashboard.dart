@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:simpsons_park/pages/tabs/admin/news_tab.dart';
-import '../pages/tabs/admin/dashboard_overview_tab.dart';
-import '../pages/tabs/admin/profile_tab.dart';
-import '../widgets/appbar/appbar_custom.dart';
-import '../widgets/drawer/drawer_custom.dart';
+import 'package:simpsons_park/pages/tabs/admin/dashboard_overview_tab.dart';
+import 'package:simpsons_park/pages/tabs/admin/profile_tab.dart';
+import 'package:simpsons_park/widgets/appbar/appbar_custom.dart';
+import 'package:simpsons_park/widgets/drawer/drawer_custom.dart';
 
 class AppDashboard extends StatefulWidget {
   const AppDashboard({super.key});
@@ -21,6 +21,15 @@ class _AppDashboardState extends State<AppDashboard> {
     NewsTab(),
     ProfileTab(),
   ];
+  static const List<BottomNavigationBarItem>
+  _bottomNavigationBarItems = <BottomNavigationBarItem>[
+    // == Résumé des données enregistrées
+    BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Résumé'),
+    // == Listes des articles
+    BottomNavigationBarItem(icon: Icon(Icons.newspaper), label: 'News'),
+    // == Profile de l'utilisateur connecté
+    BottomNavigationBarItem(icon: Icon(Icons.verified_user), label: 'Profil'),
+  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -35,23 +44,7 @@ class _AppDashboardState extends State<AppDashboard> {
       drawer: DrawerCustom(),
       body: IndexedStack(index: _selectedIndex, children: _pagesOptions),
       bottomNavigationBar: BottomNavigationBar(
-
-        items: const <BottomNavigationBarItem>[
-
-          // == Résumé des données enregistrées
-          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Résumé'),
-
-          // == Listes des articles
-          BottomNavigationBarItem(icon: Icon(Icons.newspaper), label: 'News'),
-
-          // == Profile de l'utilisateur connecté
-          BottomNavigationBarItem(
-            icon: Icon(Icons.verified_user),
-            label: 'Profil',
-          ),
-
-        ],
-
+        items: _bottomNavigationBarItems,
         showUnselectedLabels: true,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[900],
