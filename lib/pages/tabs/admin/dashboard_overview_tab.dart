@@ -13,58 +13,49 @@ class DashboardOverviewTab extends StatefulWidget {
 class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<int?> _getCollectionCount(String collectionName) async {
-    try {
-      AggregateQuerySnapshot snapshot =
-      await _firestore.collection(collectionName).count().get();
-      return snapshot.count;
-    } catch (e) {
-      if (kDebugMode) {
-        print("Erreur lors de la récupération du nombre pour $collectionName: $e");
-      }
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding (
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: <Widget>[
             Text(
               'Aperçu des Données',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
+            // == Personnages enregistrés
             const SizedBox(height: 24),
             _buildCountCard(
               title: 'Personnages Enregistrés',
-              countFuture: _getCollectionCount('characters'),
+              countStream: _firestore.collection('characters').snapshots(),
               icon: Icons.people_alt_outlined,
               color: Colors.orange,
             ),
+            // == Saisons enregistrées
             const SizedBox(height: 16),
             _buildCountCard(
               title: 'Saisons Enregistrées',
-              countFuture: _getCollectionCount('seasons'),
+              countStream: _firestore.collection('seasons').snapshots(),
               icon: Icons.video_library_outlined,
               color: Colors.blue,
             ),
+            // == Épisodes enregistrés
             const SizedBox(height: 16),
             _buildCountCard(
               title: 'Épisodes Enregistrés',
-              countFuture: _getCollectionCount('episodes'),
+              countStream: _firestore.collection('episodes').snapshots(),
               icon: Icons.tv_outlined,
               color: Colors.green,
             ),
+            // == Topics Rédigés
             const SizedBox(height: 16),
             _buildCountCard(
               title: 'Topics Rédigés',
-              countFuture: _getCollectionCount('newspapers'),
+              countStream: _firestore.collection('newspapers').snapshots(),
               icon: Icons.newspaper_outlined,
               color: Colors.pink,
             ),
@@ -76,7 +67,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
 
   Widget _buildCountCard({
     required String title,
-    required Future<int?> countFuture,
+    required Stream<QuerySnapshot<Map<String, dynamic>>> countStream,
     required IconData icon,
     required Color color,
   }) {
@@ -100,30 +91,54 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  FutureBuilder<int?>(
-                    future: countFuture,
+                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    // == Récupération des documents dans la collection
+                    stream: countStream,
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot
+                              .hasData) // Gèrer l'état de la récupération des données
+                      {
                         return const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         );
-                      } else if (snapshot.hasError || snapshot.data == null) {
+                      } else if (snapshot.hasError) // Cas où il y a une erreur
+                      {
+                        if (kDebugMode) {
+                          print(
+                            "Erreur StreamBuilder pour $title: ${snapshot.error}",
+                          );
+                        }
                         return Text(
-                          'Erreur de chargement',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.error,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          'Erreur',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                                fontWeight: FontWeight.bold,
+                              ),
                         );
-                      } else {
+                      } else if (snapshot.hasData) // Cas où il y a des données
+                      {
+                        final count = snapshot.data?.docs.length ?? 0;
                         return Text(
-                          snapshot.data.toString(),
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          count.toString(),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        );
+                      } else // Cas où il n'y a pas de données
+                      {
+                        return Text(
+                          '0',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: color,
+                                fontWeight: FontWeight.bold,
+                              ),
                         );
                       }
                     },
