@@ -111,7 +111,7 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
         child: ListView(
           children: <Widget>[
             Text(
-              'Qu',
+              'Ajouter un article\ndans le dossiers',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
