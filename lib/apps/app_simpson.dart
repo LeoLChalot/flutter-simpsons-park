@@ -21,8 +21,7 @@ class _AppSimpsonState extends State<AppSimpson> {
     SeasonsTab(),
     NewspapersTab(),
   ];
-
-  static const List<BottomNavigationBarItem> _items = <BottomNavigationBarItem>[
+  static const List<BottomNavigationBarItem> _bottomNavigationBarItems = <BottomNavigationBarItem>[
     // == Liste des personnages
     BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Personnages'),
     // == Liste des saisons
@@ -44,7 +43,7 @@ class _AppSimpsonState extends State<AppSimpson> {
       drawer: DrawerCustom(),
       body: IndexedStack(index: _selectedIndex, children: _pagesOptions),
       bottomNavigationBar: BottomNavigationBar(
-        items: _items,
+        items: _bottomNavigationBarItems,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[900],
         unselectedItemColor: Colors.amber[500],
