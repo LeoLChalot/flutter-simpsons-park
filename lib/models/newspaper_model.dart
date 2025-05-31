@@ -19,29 +19,29 @@ class Newspaper {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Newspaper(
       id: doc.id,
-      title: data['firstName'] as String? ?? '',
-      subtitle: data['lastName'] as String? ?? '',
-      body: data['pseudo'] as String? ?? '',
-      author: data['imageUrl'] as String? ?? '',
+      title: data['title'] as String? ?? '',
+      subtitle: data['subtitle'] as String? ?? '',
+      body: data['body'] as String? ?? '',
+      author: data['author'] as String? ?? '',
     );
   }
 
   factory Newspaper.fromJson(Map<String, dynamic> json) {
     return Newspaper(
       id: json['id'] as String? ?? '',
-      title: json['firstName'] as String? ?? '',
-      subtitle: json['lastName'] as String? ?? '',
-      body: json['pseudo'] as String? ?? '',
-      author: json['imageUrl'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      subtitle: json['subtitle'] as String? ?? '',
+      body: json['body'] as String? ?? '',
+      author: json['author'] as String? ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'firstName': title,
-      'lastName': subtitle,
-      'pseudo': body,
-      'imageUrl': author
+      'title': title,
+      'subtitle': subtitle,
+      'body': body,
+      'author': author
     };
   }
 }
