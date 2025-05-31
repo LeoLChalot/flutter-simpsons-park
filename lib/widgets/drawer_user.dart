@@ -19,9 +19,8 @@ class _DrawerUserState extends State<DrawerUser> {
 
       if (!mounted) return;
 
-      // Naviguer vers l'écran de connexion/accueil après déconnexion
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        Routes.accessForm,
+
+      Navigator.of(context).pushNamedAndRemoveUntil(Routes.accessForm,
         (Route<dynamic> route) => false,
       );
 
