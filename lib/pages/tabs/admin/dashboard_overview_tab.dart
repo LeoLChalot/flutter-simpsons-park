@@ -47,7 +47,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
             const SizedBox(height: 16),
             _buildCountCard(
               title: 'Épisodes Enregistrés (Total)',
-              countStream: _firestore.collectionGroup('episodes').snapshots(), // <-- MODIFICATION CLÉ
+              countStream: _firestore.collectionGroup('episodes').snapshots(),
               icon: Icons.tv_outlined,
               color: Colors.green,
             ),

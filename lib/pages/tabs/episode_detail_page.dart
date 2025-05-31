@@ -34,7 +34,7 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
       _characterLoadError = null;
     });
     try {
-      final characters = await widget.episode.getOrLoadCharacters(FirebaseFirestore.instance);
+      final characters = await widget.episode.getCharacters(FirebaseFirestore.instance);
       if (mounted) {
         setState(() {
           _loadedCharacters = characters;
@@ -131,7 +131,7 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
               style: textTheme.bodyLarge?.copyWith(
                 height: 1.5, // Interligne
                 fontSize: 15, // Taille de police
-                color: theme.colorScheme.onSurface.withOpacity(0.80),
+                color: theme.colorScheme.onSurface.withValues(),
               ),
               textAlign: TextAlign.justify,
             ),
@@ -156,7 +156,7 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
     return Chip(
       avatar: Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSecondaryContainer),
       label: Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer)),
-      backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.7),
+      backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withValues(),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
     );
   }

@@ -22,6 +22,26 @@ class _AppSimpsonState extends State<AppSimpson> {
     NewspapersTab()
   ];
 
+  static const List<BottomNavigationBarItem> _items = <BottomNavigationBarItem>[
+    // == Liste des personnages
+    BottomNavigationBarItem(
+      icon: Icon(Icons.person),
+      label: 'Personnages',
+    ),
+
+    // == Liste des saisons
+    BottomNavigationBarItem(
+        icon: Icon(Icons.tv),
+        label: 'Saisons'
+    ),
+
+    // == Liste des Dossiers
+    BottomNavigationBarItem(
+        icon: Icon(Icons.folder),
+        label: 'Dossiers'
+    ),
+  ];
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -35,35 +55,12 @@ class _AppSimpsonState extends State<AppSimpson> {
       drawer: DrawerCustom(),
       body: IndexedStack(index: _selectedIndex, children: _pagesOptions),
       bottomNavigationBar: BottomNavigationBar(
-
-        items: const <BottomNavigationBarItem>[
-
-          // == Liste des personnages
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Personnages',
-          ),
-
-          // == Liste des saisons
-          BottomNavigationBarItem(
-              icon: Icon(Icons.tv),
-              label: 'Saisons'
-          ),
-
-          // == Liste des Dossiers
-          BottomNavigationBarItem(
-              icon: Icon(Icons.folder),
-              label: 'Dossiers'
-          ),
-
-        ],
-
+        items: _items,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[900],
         unselectedItemColor: Colors.amber[500],
         elevation: 15,
         onTap: _onItemTapped,
-
       ),
     );
   }

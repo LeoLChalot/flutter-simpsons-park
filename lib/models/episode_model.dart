@@ -1,9 +1,9 @@
-// lib/models/episode_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:simpsons_park/models/character_model.dart'; // Assure-toi que ce chemin est correct
+import 'package:flutter/foundation.dart';
+import 'package:simpsons_park/models/character_model.dart';
 
 class Episode {
-  final String id; // ID du document épisode dans la sous-collection
+  final String id;
   final int episodeNumber;
   final int seasonNumber;
   final String title;
@@ -49,8 +49,8 @@ class Episode {
     );
   }
 
-  // La méthode getOrLoadCharacters reste la même
-  Future<List<Character>> getOrLoadCharacters(FirebaseFirestore firestoreInstance) async {
+  // La méthode getCharacters reste la même
+  Future<List<Character>> getCharacters(FirebaseFirestore firestoreInstance) async {
     if (_loadedCharacters != null) return _loadedCharacters!;
     _loadedCharacters = [];
     for (String characterId in charactersRef) {
@@ -61,13 +61,14 @@ class Episode {
           _loadedCharacters!.add(Character.fromFirestore(charDoc));
         }
       } catch (e) {
-        print("Erreur chargement personnage ID $characterId pour épisode ${this.id}: $e");
+        if (kDebugMode) {
+          print("Erreur chargement personnage ID $characterId pour épisode $id: $e");
+        }
       }
     }
     return _loadedCharacters!;
   }
 
-  // toJson (si tu en as besoin pour écrire des épisodes en tant que documents séparés)
   Map<String, dynamic> toJson() {
     return {
       'episodeNumber': episodeNumber,

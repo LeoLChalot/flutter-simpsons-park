@@ -77,7 +77,7 @@ class _DrawerCustomState extends State<DrawerCustom> {
                   onTap: () {
                     Navigator.pushNamed(context, Routes.loading);
                     Future.delayed(Duration(seconds: _delayDuration), () {
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       if (Navigator.canPop(context)) {
                         Navigator.pop(context);
                       }
@@ -92,7 +92,7 @@ class _DrawerCustomState extends State<DrawerCustom> {
                     onTap: () {
                       Navigator.pushNamed(context, Routes.loading);
                       Future.delayed(Duration(seconds: _delayDuration), () {
-                        if (!mounted) return;
+                        if (!context.mounted) return;
                         if (Navigator.canPop(context)) {
                           Navigator.pop(context);
                         }
@@ -111,7 +111,7 @@ class _DrawerCustomState extends State<DrawerCustom> {
               onTap: () {
                 Navigator.pushNamed(context, Routes.loading);
                 Future.delayed(Duration(seconds: _delayDuration), () {
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
                   }

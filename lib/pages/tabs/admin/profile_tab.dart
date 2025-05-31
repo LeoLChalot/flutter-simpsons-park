@@ -1,9 +1,8 @@
-// lib/pages/tabs/admin/profile_tab.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:simpsons_park/utils/routes.dart';
-import 'package:simpsons_park/utils/simpsons_color_scheme.dart'; // Pour la redirection
+import 'package:simpsons_park/utils/simpsons_color_scheme.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -30,8 +29,6 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _showChangePasswordDialog(BuildContext context, User currentUser) async {
-
-    // Demander le mot de passe actuel pour re-authentification
     bool? reauthenticated = false;
     bool isLoadingReauth = false;
 
@@ -80,10 +77,10 @@ class _ProfileTabState extends State<ProfileTab> {
                 actions: <Widget>[
                   // Bouton d'annulation
                   TextButton(
-                    child: const Text('Annuler'),
                     onPressed: isLoadingReauth ? null : () {
                       Navigator.of(dialogContext).pop(false);
                     },
+                    child: const Text('Annuler'),
                   ),
                   // Bouton de confirmation
                   ElevatedButton(
@@ -96,9 +93,11 @@ class _ProfileTabState extends State<ProfileTab> {
                             password: _currentPasswordController.text,
                           );
                           await currentUser.reauthenticateWithCredential(credential);
-                          if (mounted) Navigator.of(dialogContext).pop(true);
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop(true);
+                          }
                         } on FirebaseAuthException catch (e) {
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(e.code == 'wrong-password' || e.code == 'ERROR_WRONG_PASSWORD'
@@ -205,7 +204,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         setStateDialog(() => isLoadingNewPassword = true);
                         try {
                           await currentUser.updatePassword(_newPasswordController.text);
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Mot de passe mis à jour avec succès !'),
@@ -215,23 +214,20 @@ class _ProfileTabState extends State<ProfileTab> {
                             Navigator.of(dialogContext).pop(true);
                           }
                         } on FirebaseAuthException catch (e) {
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Erreur: ${e.message}'),
                                 backgroundColor: simpsonsTheme.colorScheme.error,
                               ),
                             );
-                            // On ne ferme pas le dialogue pour permettre de réessayer ou de corriger
-                            setStateDialog(() => isLoadingNewPassword = false); // Réactiver les boutons
+                            setStateDialog(() => isLoadingNewPassword = false);
                           }
                         } finally {
                           _newPasswordController.clear();
                           _confirmNewPasswordController.clear();
                         }
-                      } else {
-                        // Si la validation du formulaire échoue, ne rien faire d'asynchrone.
-                      }
+                      } else {}
                     },
                     child: const Text('Changer'),
                   ),
@@ -244,7 +240,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
     // Déconnexion après le changement du mot de passe
     if (passwordChanged == true) {
-      if (mounted) {
+      if (context.mounted) {
         await showDialog<void>(
           context: context, // Utiliser le context de ProfileTab
           barrierDismissible: false, // L'utilisateur doit cliquer sur OK
@@ -257,7 +253,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 TextButton(
                   child: const Text('OK'),
                   onPressed: () {
-                    Navigator.of(alertContext).pop(); // Ferme cette popup d'information
+                    Navigator.of(alertContext).pop(); // Ferme la popup d'info
                   },
                 ),
               ],
@@ -271,7 +267,7 @@ class _ProfileTabState extends State<ProfileTab> {
           setState(() => _isLoading = true); // Indicateur de chargement global pour la déconnexion
           try {
             await FirebaseAuth.instance.signOut();
-            if (mounted) {
+            if (context.mounted) {
               Navigator.of(context).pushNamedAndRemoveUntil(
                 Routes.accessForm,
                     (Route<dynamic> route) => false,
@@ -365,7 +361,7 @@ class _ProfileTabState extends State<ProfileTab> {
                     setState(() => _isLoading = true); // Démarre le chargement
                     try {
                       await FirebaseAuth.instance.signOut();
-                      if (mounted) {
+                      if (context.mounted) {
                         Navigator.of(context).pushNamedAndRemoveUntil(
                           Routes.accessForm,
                               (Route<dynamic> route) => false,
@@ -373,7 +369,7 @@ class _ProfileTabState extends State<ProfileTab> {
                       }
                     } catch (e) {
                       if(kDebugMode) print("Erreur pendant la déconnexion depuis le bouton profil: $e");
-                      if (mounted) { // Si erreur, au moins arrêter l'indicateur de chargement
+                      if (context.mounted) { // Si erreur, arrêter l'indicateur de chargement
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Erreur de déconnexion: ${e.toString()}"), backgroundColor: simpsonsTheme.colorScheme.error),
                         );
