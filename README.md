@@ -69,9 +69,9 @@ Cloud Firestore est utilisé comme base de données NoSQL pour stocker les infor
 les saisons, les épisodes, etc. L'accès se fait via l'instance `FirebaseFirestore.instance`.
 
 ### Structure des Données
-- characters/{id} : Documents des personnages.
-- seasons/{id} : Documents des saisons, contenant des références aux épisodes.
-- episodes/{id} : Documents des épisodes, contenant des références aux personnages.
+  - characters/{id} : Documents des personnages.
+  - seasons/{id} : Documents des saisons, contenant des références aux épisodes.
+  - episodes/{id} : Documents des épisodes, contenant des références aux personnages.
 
 - **Create**
 ```dart
