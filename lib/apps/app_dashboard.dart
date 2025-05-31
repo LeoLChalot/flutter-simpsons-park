@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:simpsons_park/pages/tabs/admin/news_tab.dart';
 import '../pages/tabs/admin/dashboard_overview_tab.dart';
 import '../pages/tabs/admin/profile_tab.dart';
-import '../widgets/appbar_custom.dart';
-import '../widgets/drawer_custom.dart';
+import '../widgets/appbar/appbar_custom.dart';
+import '../widgets/drawer/drawer_custom.dart';
 
 class AppDashboard extends StatefulWidget {
   const AppDashboard({super.key});

@@ -1,20 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../utils/routes.dart'; // Assure-toi que ce chemin est correct
+// Importer simpsons_color_scheme.dart si tu as besoin d'accéder directement aux couleurs,
+// mais il est préférable de passer par Theme.of(context)
+import '../../utils/simpsons_color_scheme.dart';
 
-import '../services/auth_service.dart';
+class FormLoginWidget extends StatefulWidget {
+  final VoidCallback onSwitchToRegister;
 
-class RegisterForm extends StatefulWidget {
-  final VoidCallback onSwitchToLogin;
-
-  const RegisterForm({super.key, required this.onSwitchToLogin});
+  const FormLoginWidget({super.key, required this.onSwitchToRegister});
 
   @override
-  State<RegisterForm> createState() => _RegisterFormState();
+  State<FormLoginWidget> createState() => _FormLoginWidgetState();
 }
 
-class _RegisterFormState extends State<RegisterForm> {
-  final _authService = AuthService();
+class _FormLoginWidgetState extends State<FormLoginWidget> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -26,53 +27,70 @@ class _RegisterFormState extends State<RegisterForm> {
     super.dispose();
   }
 
-  Future<void> onSubmit() async {
+  Future<void> _signIn() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final credential = await _authService.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+
+      final User? user = userCredential.user;
 
       if (!mounted) return;
 
-      if (credential.user != null) {
+      if (user != null) {
+        if (kDebugMode) {
+          print("Utilisateur connecté avec l'ID : ${user.uid}");
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Utilisateur inscrit avec l\'ID : ${credential.user!.uid}',
+              'Connecté en tant que : ${user.email} (ID: ${user.uid})',
             ),
+            backgroundColor: Colors.green,
           ),
         );
-        if (kDebugMode) {
-          print("Utilisateur créé avec l'ID : ${credential.user!.uid}");
-        }
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(Routes.home, (route) => false);
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      String message = 'Une erreur est survenue lors de l\'inscription.';
-      if (e.code == 'weak-password') {
-        message = 'Le mot de passe fourni est trop faible.';
-      } else if (e.code == 'email-already-in-use') {
-        message = 'Un compte existe déjà pour cet email.';
+      String message = 'Erreur de connexion.';
+      if (e.code == 'user-not-found') {
+        message = 'Aucun utilisateur trouvé pour cet email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Mot de passe incorrect.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Format d\'email invalide.';
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
       if (kDebugMode) {
-        print(e);
+        print('FirebaseAuthException: ${e.code} - ${e.message}');
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Une erreur inattendue est survenue.')),
-      );
       if (kDebugMode) {
-        print(e);
+        print('Erreur de connexion inattendue: $e');
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Une erreur inattendue est survenue.'),
+          backgroundColor: simpsonsTheme
+              .colorScheme
+              .error, // Utilise la couleur d'erreur du thème
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -86,13 +104,14 @@ class _RegisterFormState extends State<RegisterForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            'Inscription',
+            'Connexion',
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -110,7 +129,7 @@ class _RegisterFormState extends State<RegisterForm> {
             keyboardType: TextInputType.emailAddress,
             style: TextStyle(color: colorScheme.onSurface),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 12),
           TextField(
             controller: _passwordController,
             decoration: InputDecoration(
@@ -124,7 +143,7 @@ class _RegisterFormState extends State<RegisterForm> {
           ),
           const SizedBox(height: 30),
           ElevatedButton(
-            onPressed: _isLoading ? null : onSubmit,
+            onPressed: _isLoading ? null : _signIn,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               backgroundColor: colorScheme.secondary,
@@ -144,13 +163,13 @@ class _RegisterFormState extends State<RegisterForm> {
                       ),
                     ),
                   )
-                : const Text('M\'inscrire'),
+                : const Text('Se connecter'),
           ),
           const SizedBox(height: 15),
           TextButton(
-            onPressed: widget.onSwitchToLogin,
+            onPressed: widget.onSwitchToRegister,
             style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
-            child: const Text('Déjà un compte ? Se connecter'),
+            child: const Text("Pas encore de compte ? M'inscrire"),
           ),
         ],
       ),
