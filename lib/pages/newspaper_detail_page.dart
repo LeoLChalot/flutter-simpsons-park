@@ -101,7 +101,7 @@ class NewspaperDetailPage extends StatelessWidget {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    article.author ?? 'Membre de la communauté d\'amin',
+                    article.author ?? 'Membre de la communauté d\'admin',
                     style: textTheme.bodySmall?.copyWith(
                       color: Colors.grey[700],
                     ),
