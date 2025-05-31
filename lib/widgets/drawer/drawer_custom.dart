@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../utils/routes.dart';
+import '../../utils/routes.dart';
 
 class DrawerCustom extends StatefulWidget {
   const DrawerCustom({super.key});

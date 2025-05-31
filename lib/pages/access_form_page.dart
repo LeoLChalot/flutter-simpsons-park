@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:simpsons_park/widgets/drawer_custom.dart';
-import 'package:simpsons_park/widgets/drawer_user.dart';
+import 'package:simpsons_park/widgets/drawer/drawer_custom.dart';
 
-import '../widgets/appbar_custom.dart';
-import '../widgets/login_form_widget.dart';
-import '../widgets/register_form_widget.dart';
+import '../widgets/appbar/appbar_custom.dart';
+import '../widgets/forms/form_login_widget.dart';
+import '../widgets/forms/form_register_widget.dart';
 
 class AccessFormPage extends StatefulWidget {
   const AccessFormPage({super.key});
@@ -36,8 +35,8 @@ class _AccessFormPageState extends State<AccessFormPage> {
       body: Center(
         child: SingleChildScrollView(
           child: _showLoginForm
-              ? LoginForm(onSwitchToRegister: _toggleFormType)
-              : RegisterForm(onSwitchToLogin: _toggleFormType),
+              ? FormLoginWidget(onSwitchToRegister: _toggleFormType)
+              : FormRegisterWidge(onSwitchToLogin: _toggleFormType),
         ),
       ),
     );
