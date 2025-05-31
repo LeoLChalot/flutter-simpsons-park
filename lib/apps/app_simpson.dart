@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simpsons_park/pages/tabs/newspapers_tab.dart';
 import 'package:simpsons_park/widgets/drawer/drawer_custom.dart';
 import 'package:simpsons_park/pages/tabs/characters_tab.dart';
 import 'package:simpsons_park/pages/tabs/seasons_tab.dart';
@@ -16,8 +17,9 @@ class _AppSimpsonState extends State<AppSimpson> {
   String title = 'Simpsons Park 2.0';
 
   static const List<Widget> _pagesOptions = <Widget>[
-    ChatactersTab(),
+    CharactersTab(),
     SeasonsTab(),
+    NewspapersTab()
   ];
 
   void _onItemTapped(int index) {
@@ -46,6 +48,12 @@ class _AppSimpsonState extends State<AppSimpson> {
           BottomNavigationBarItem(
               icon: Icon(Icons.tv),
               label: 'Saisons'
+          ),
+
+          // == Liste des Dossiers
+          BottomNavigationBarItem(
+              icon: Icon(Icons.folder),
+              label: 'Dossiers'
           ),
 
         ],

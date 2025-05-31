@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:simpsons_park/widgets/forms/admin/form_newspaper_widget.dart';
 
 class NewsTab extends StatefulWidget {
   const NewsTab({super.key});
@@ -10,6 +11,8 @@ class NewsTab extends StatefulWidget {
 class _NewsTabState extends State<NewsTab> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      body: FormNewspaperWidget(),
+    );
   }
 }

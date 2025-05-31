@@ -73,6 +73,7 @@ les saisons, les épisodes, etc. L'accès se fait via l'instance `FirebaseFirest
   - seasons/{id} : Documents des saisons, contenant des références aux épisodes.
   - episodes/{id} : Documents des épisodes, contenant des références aux personnages.
 
+### CRUD (Create, Read, Update, Delete)
 - **Create**
 ```dart
 // Ajouter un document avec un ID auto-généré

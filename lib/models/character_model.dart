@@ -7,6 +7,7 @@ class Character {
   final String pseudo;
   final String imageUrl;
   final String history;
+  final List<String> searchInitials;
 
   Character({
     required this.id,
@@ -15,6 +16,7 @@ class Character {
     required this.pseudo,
     required this.imageUrl,
     required this.history,
+    required this.searchInitials,
   });
 
   factory Character.fromFirestore(DocumentSnapshot doc) {
@@ -26,6 +28,7 @@ class Character {
       pseudo: data['pseudo'] as String? ?? '',
       imageUrl: data['imageUrl'] as String? ?? '',
       history: data['history'] as String? ?? '',
+      searchInitials: List<String>.from(data['searchInitials'] as List<dynamic>? ?? []),
     );
   }
 
@@ -37,16 +40,23 @@ class Character {
       pseudo: json['pseudo'] as String? ?? '',
       imageUrl: json['imageUrl'] as String? ?? '',
       history: json['history'] as String? ?? '',
+      searchInitials: List<String>.from(json['searchInitials'] as List<dynamic>? ?? []),
     );
   }
 
   Map<String, dynamic> toJson() {
+    List<String> initials = [];
+    if (firstName.isNotEmpty) initials.add(firstName[0].toUpperCase());
+    if (lastName.isNotEmpty) initials.add(lastName[0].toUpperCase());
+    if (pseudo.isNotEmpty) initials.add(pseudo[0].toUpperCase());
+    initials = initials.toSet().toList();
     return {
       'firstName': firstName,
       'lastName': lastName,
       'pseudo': pseudo,
       'imageUrl': imageUrl,
       'history': history,
+      'searchInitials': initials.isNotEmpty ? initials : null,
     };
   }
 }

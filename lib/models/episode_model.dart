@@ -1,99 +1,83 @@
+// lib/models/episode_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-import 'package:simpsons_park/models/character_model.dart';
+import 'package:simpsons_park/models/character_model.dart'; // Assure-toi que ce chemin est correct
 
 class Episode {
-  final String? id;
-  final int seasonNumber;
+  final String id; // ID du document épisode dans la sous-collection
   final int episodeNumber;
+  final int seasonNumber;
   final String title;
-  final String synopsis;
-  final String code;
-  final String duration;
-  final String releaseDate; // Reste un String
   final String imageUrl;
-  final List<DocumentReference> characterReferences;
+  final String description;
+  final String duration;
+  final String releaseDate;
+  final List<String> charactersRef;
 
   List<Character>? _loadedCharacters;
 
   Episode({
-    this.id,
-    required this.seasonNumber,
+    required this.id,
     required this.episodeNumber,
+    required this.seasonNumber,
     required this.title,
-    required this.synopsis,
-    required this.code,
-    required this.duration,
-    required this.releaseDate, // Attend maintenant une String formatée
     required this.imageUrl,
-    required this.characterReferences,
+    required this.description,
+    required this.duration,
+    required this.releaseDate,
+    required this.charactersRef,
   });
 
+  // Factory pour créer un Episode depuis un DocumentSnapshot Firestore
   factory Episode.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
-
     if (data == null) {
-      throw StateError('Les données du document épisode ${doc.id} sont nulles !');
+      throw Exception("Les données de l'épisode ${doc.id} sont nulles!");
     }
-
-    List<DocumentReference> charRefs = [];
-    if (data['characters'] != null && data['characters'] is List) {
-      charRefs = (data['characters'] as List<dynamic>)
-          .whereType<DocumentReference>()
-          .toList();
-    }
-
     return Episode(
-      id: doc.id,
-      seasonNumber: data['seasonNumber'] as int,
-      episodeNumber: data['episodeNumber'] as int,
-      title: data['title'] as String,
-      synopsis: data['synopsis'] as String,
-      code: data['code'] as String,
-      duration: data['duration'] as String,
-      releaseDate: data['releaseDate'] as String, // Assignation de la String formatée
-      imageUrl: data['imageUrl'] as String,
-      characterReferences: charRefs,
+      id: doc.id, // Utilise l'ID du document Firestore
+      episodeNumber: data['episodeNumber'] as int? ?? 0,
+      seasonNumber: data['seasonNumber'] as int? ?? 0,
+      title: data['title'] as String? ?? 'Titre inconnu',
+      imageUrl: data['imageUrl'] as String? ?? '',
+      description: data['description'] as String? ?? '',
+      duration: data['duration'] as String? ?? 'N/A',
+      releaseDate: data['releaseDate'] as String? ?? 'Date inconnue',
+      charactersRef: (data['charactersRef'] as List<dynamic>?)
+          ?.map((ref) => ref as String)
+          .toList() ??
+          [],
     );
   }
 
+  // La méthode getOrLoadCharacters reste la même
   Future<List<Character>> getOrLoadCharacters(FirebaseFirestore firestoreInstance) async {
-    if (_loadedCharacters != null) {
-      return _loadedCharacters!;
-    }
-    List<Character> characters = [];
-    for (DocumentReference ref in characterReferences) {
+    if (_loadedCharacters != null) return _loadedCharacters!;
+    _loadedCharacters = [];
+    for (String characterId in charactersRef) {
       try {
         DocumentSnapshot<Map<String, dynamic>> charDoc =
-        await ref.get() as DocumentSnapshot<Map<String, dynamic>>;
+        await firestoreInstance.collection('characters').doc(characterId).get();
         if (charDoc.exists && charDoc.data() != null) {
-          characters.add(Character.fromFirestore(charDoc));
-        } else {
-          if (kDebugMode) {
-            print('Document personnage non trouvé ou vide: ${ref.path}');
-          }
+          _loadedCharacters!.add(Character.fromFirestore(charDoc));
         }
       } catch (e) {
-        if (kDebugMode) {
-          print("Erreur de chargement du personnage ${ref.path}: $e");
-        }
+        print("Erreur chargement personnage ID $characterId pour épisode ${this.id}: $e");
       }
     }
-    _loadedCharacters = characters;
-    return characters;
+    return _loadedCharacters!;
   }
 
+  // toJson (si tu en as besoin pour écrire des épisodes en tant que documents séparés)
   Map<String, dynamic> toJson() {
     return {
-      'seasonNumber': seasonNumber,
       'episodeNumber': episodeNumber,
+      'seasonNumber': seasonNumber,
       'title': title,
-      'synopsis': synopsis,
-      'code': code,
-      'duration': duration,
-      'releaseDate': releaseDate, // releaseDate est déjà un String au format souhaité
       'imageUrl': imageUrl,
-      'characters': characterReferences,
+      'description': description,
+      'duration': duration,
+      'releaseDate': releaseDate,
+      'charactersRef': charactersRef,
     };
   }
 }
