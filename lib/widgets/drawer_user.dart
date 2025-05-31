@@ -51,7 +51,9 @@ class _DrawerUserState extends State<DrawerUser> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('User: $_currentUser');
+    if (kDebugMode) {
+      debugPrint('User: $_currentUser');
+    }
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
