@@ -1,5 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../utils/routes.dart';
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onSwitchToRegister;
@@ -36,18 +39,19 @@ class _LoginFormState extends State<LoginForm> {
 
       final User? user = userCredential.user;
 
-      if (!mounted) return; // Vérifier si le widget est toujours monté
+      if (!mounted) return;
 
       if (user != null) {
-        print("Utilisateur connecté avec l'ID : ${user.uid}");
+        if (kDebugMode) {
+          print("Utilisateur connecté avec l'ID : ${user.uid}");
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Connecté en tant que : ${user.email} (ID: ${user.uid})'),
             backgroundColor: Colors.green,
           ),
         );
-        // Ici, vous pourriez naviguer vers une autre page, par exemple.
-        // widget.onLoginSuccess(); // Si vous avez un callback pour le succès
+        Navigator.pushNamed(context, Routes.home);
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -59,7 +63,9 @@ class _LoginFormState extends State<LoginForm> {
       } else if (e.code == 'invalid-email') {
         message = 'Format d\'email invalide.';
       }
-      print('FirebaseAuthException: ${e.code} - ${e.message}');
+      if(kDebugMode){
+        print('FirebaseAuthException: ${e.code} - ${e.message}');
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -68,7 +74,9 @@ class _LoginFormState extends State<LoginForm> {
       );
     } catch (e) {
       if (!mounted) return;
-      print('Erreur de connexion inattendue: $e');
+      if(kDebugMode){
+        print('Erreur de connexion inattendue: $e');
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Une erreur inattendue est survenue.'),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../pages/tabs/characters_tab.dart';
-import '../pages/tabs/episodes_tab.dart';
 import '../pages/tabs/seasons_tab.dart';
 import '../widgets/appbar_custom.dart';
 import '../widgets/drawer_user.dart';
@@ -18,7 +17,7 @@ class _AppSimpsonState extends State<AppSimpson> {
 
   static const List<Widget> _pagesOptions = <Widget>[
     CharactersTab(),
-    EpisodesTab(),
+    // EpisodesTab(),
     SeasonsTab(),
   ];
 
@@ -40,8 +39,11 @@ class _AppSimpsonState extends State<AppSimpson> {
             icon: Icon(Icons.person),
             label: 'Personnages',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Episodes'),
-          BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Saisons'),
+          // BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Episodes'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.tv),
+              label: 'Saisons'
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[900],
