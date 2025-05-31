@@ -2,7 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Character {
-  final String id; // Ajout de l'ID du document
+  final String id;
   final String firstName;
   final String lastName;
   final String pseudo;
@@ -10,7 +10,7 @@ class Character {
   final String history;
 
   Character({
-    required this.id, // Ajout de l'ID ici
+    required this.id,
     required this.firstName,
     required this.lastName,
     required this.pseudo,
@@ -21,12 +21,12 @@ class Character {
   factory Character.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Character(
-      id: doc.id, // On stocke l'ID du document
+      id: doc.id,
       firstName: data['firstName'] as String? ?? '',
       lastName: data['lastName'] as String? ?? '',
       pseudo: data['pseudo'] as String? ?? '',
       imageUrl: data['imageUrl'] as String? ?? '',
-      history: data['history'] as String? ?? '', // Correction: utiliser data['history']
+      history: data['history'] as String? ?? '',
     );
   }
 
@@ -43,7 +43,6 @@ class Character {
 
   Map<String, dynamic> toJson() {
     return {
-      // 'id': id, // Tu peux l'ajouter si tu en as besoin en écrivant dans Firestore
       'firstName': firstName,
       'lastName': lastName,
       'pseudo': pseudo,

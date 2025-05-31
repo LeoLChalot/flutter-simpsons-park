@@ -33,7 +33,7 @@ class _LoginFormState extends State<LoginForm> {
     try {
       // Utiliser signInWithEmailAndPassword pour la connexion standard
       final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(), // Bonne pratique d'utiliser trim()
+        email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 

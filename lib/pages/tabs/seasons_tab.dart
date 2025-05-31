@@ -17,11 +17,13 @@ class _SeasonsTabState extends State<SeasonsTab> {
 
   // Key: season.id (String), Value: List of Episodes
   final Map<String, List<Episode>> _loadedEpisodes = {};
+
   // Key: season.id (String), Value: bool (true if loading)
   final Map<String, bool> _isLoadingEpisodes = {};
 
   Future<void> _fetchEpisodesForSeason(Season season) async {
-    if (_loadedEpisodes.containsKey(season.id) || (_isLoadingEpisodes[season.id] == true)) {
+    if (_loadedEpisodes.containsKey(season.id) ||
+        (_isLoadingEpisodes[season.id] == true)) {
       return;
     }
 
@@ -56,7 +58,6 @@ class _SeasonsTabState extends State<SeasonsTab> {
       // Utilisation des références stockées dans l'objet Season
       List<Map<String, dynamic>>? episodeRefsArray = season.episodeReferences;
 
-
       if (episodeRefsArray.isEmpty) {
         if (kDebugMode) {
           print("No episode references found in season object ${season.id}");
@@ -66,26 +67,36 @@ class _SeasonsTabState extends State<SeasonsTab> {
           // _isLoadingEpisodes[season.id] = false; // Géré dans finally
         });
         // return; // Ne pas retourner ici pour que finally s'exécute
-      } else { // Seulement si episodeRefsArray n'est pas null et pas vide
+      } else {
+        // Seulement si episodeRefsArray n'est pas null et pas vide
         for (var episodeMapEntry in episodeRefsArray) {
           // Le modèle Season stocke déjà des Map<String, dynamic>
           // donc episodeMapEntry est déjà une Map<String, dynamic>.
           // if (episodeMapEntry is Map<String, dynamic>) { // Plus nécessaire si le type est garanti par Season.episodeReferences
-          final DocumentReference? episodeRef = episodeMapEntry['episode'] as DocumentReference?;
+          final DocumentReference? episodeRef =
+              episodeMapEntry['episode'] as DocumentReference?;
 
           if (episodeRef != null) {
             try {
               final DocumentSnapshot episodeDoc = await episodeRef.get();
               if (episodeDoc.exists) {
-                fetchedEpisodes.add(Episode.fromFirestore(episodeDoc as DocumentSnapshot<Map<String, dynamic>>));
+                fetchedEpisodes.add(
+                  Episode.fromFirestore(
+                    episodeDoc as DocumentSnapshot<Map<String, dynamic>>,
+                  ),
+                );
               } else {
                 if (kDebugMode) {
-                  print("Episode document not found for ref: ${episodeRef.path}");
+                  print(
+                    "Episode document not found for ref: ${episodeRef.path}",
+                  );
                 }
               }
             } catch (e, stackTrace) {
               if (kDebugMode) {
-                print("Error fetching individual episode ${episodeRef.path}: $e");
+                print(
+                  "Error fetching individual episode ${episodeRef.path}: $e",
+                );
               }
               if (kDebugMode) {
                 print("Stack trace: $stackTrace");
@@ -96,12 +107,15 @@ class _SeasonsTabState extends State<SeasonsTab> {
         }
       }
 
-
       // Optionnel: Trier les épisodes si l'ordre n'est pas garanti par l'array
-      fetchedEpisodes.sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
+      fetchedEpisodes.sort(
+        (a, b) => a.episodeNumber.compareTo(b.episodeNumber),
+      );
 
       if (kDebugMode) {
-        print("Fetched ${fetchedEpisodes.length} episodes for season ${season.id}");
+        print(
+          "Fetched ${fetchedEpisodes.length} episodes for season ${season.id}",
+        );
       }
 
       // Vérifier si le widget est toujours monté avant d'appeler setState
@@ -110,7 +124,6 @@ class _SeasonsTabState extends State<SeasonsTab> {
           _loadedEpisodes[season.id] = fetchedEpisodes;
         });
       }
-
     } catch (e, stackTrace) {
       if (kDebugMode) {
         print("Error in _fetchEpisodesForSeason for season ${season.id}: $e");
@@ -135,10 +148,17 @@ class _SeasonsTabState extends State<SeasonsTab> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: _firestore.collection('seasons').orderBy('seasonNumber').snapshots(),
+      stream: _firestore
+          .collection('seasons')
+          .orderBy('seasonNumber')
+          .snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> seasonSnapshot) {
         if (seasonSnapshot.hasError) {
-          return Center(child: Text('Quelque chose s\'est mal passé avec les saisons: ${seasonSnapshot.error}'));
+          return Center(
+            child: Text(
+              'Quelque chose s\'est mal passé avec les saisons: ${seasonSnapshot.error}',
+            ),
+          );
         }
 
         if (seasonSnapshot.connectionState == ConnectionState.waiting) {
@@ -156,7 +176,12 @@ class _SeasonsTabState extends State<SeasonsTab> {
             if (kDebugMode) {
               print("Error creating Season from Firestore doc ${doc.id}: $e");
             }
-            return Season(id: doc.id, seasonNumber: 0, title: "Error: Invalid Season Data", episodeReferences: []);
+            return Season(
+              id: doc.id,
+              seasonNumber: 0,
+              title: "Error: Invalid Season Data",
+              episodeReferences: [],
+            );
           }
         }).toList();
 
@@ -164,14 +189,23 @@ class _SeasonsTabState extends State<SeasonsTab> {
           itemCount: seasons.length,
           itemBuilder: (context, index) {
             final Season season = seasons[index];
-            final bool isCurrentlyLoadingEpisodes = _isLoadingEpisodes[season.id] ?? false;
-            final List<Episode>? episodesForThisSeason = _loadedEpisodes[season.id];
+            final bool isCurrentlyLoadingEpisodes =
+                _isLoadingEpisodes[season.id] ?? false;
+            final List<Episode>? episodesForThisSeason =
+                _loadedEpisodes[season.id];
 
             return ExpansionTile(
-              key: PageStorageKey<String>(season.id), // Clé pour sauvegarder l'état d'expansion
-              title: Text(season.title.isNotEmpty ? season.title : 'Saison ${season.seasonNumber}'),
+              key: PageStorageKey<String>(season.id),
+              // Clé pour sauvegarder l'état d'expansion
+              title: Text(
+                season.title.isNotEmpty
+                    ? season.title
+                    : 'Saison ${season.seasonNumber}',
+              ),
               onExpansionChanged: (isExpanded) {
-                if (isExpanded && episodesForThisSeason == null && !isCurrentlyLoadingEpisodes) {
+                if (isExpanded &&
+                    episodesForThisSeason == null &&
+                    !isCurrentlyLoadingEpisodes) {
                   // Modifié : !_loadedEpisodes.containsKey(season.id) -> episodesForThisSeason == null
                   // pour refléter plus directement si les données sont chargées pour l'UI.
                   _fetchEpisodesForSeason(season);
@@ -183,19 +217,24 @@ class _SeasonsTabState extends State<SeasonsTab> {
                     padding: EdgeInsets.all(16.0),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (episodesForThisSeason != null && episodesForThisSeason.isNotEmpty)
-                // Enveloppe le ListView.builder dans son propre PageStorageBucket
+                else if (episodesForThisSeason != null &&
+                    episodesForThisSeason.isNotEmpty)
+                  // Enveloppe le ListView.builder dans son propre PageStorageBucket
                   PageStorage(
-                    bucket: PageStorageBucket(), // Crée un nouveau contexte de stockage pour ce sous-arbre
+                    bucket: PageStorageBucket(),
+                    // Crée un nouveau contexte de stockage pour ce sous-arbre
                     child: ListView.builder(
-                      key: ValueKey('episodes_list_for_season_${season.id}'), // Clé unique pour ce ListView
+                      key: ValueKey('episodes_list_for_season_${season.id}'),
+                      // Clé unique pour ce ListView
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: episodesForThisSeason.length,
                       itemBuilder: (context, episodeIndex) {
                         final episode = episodesForThisSeason[episodeIndex];
                         return ListTile(
-                          title: Text('E${episode.episodeNumber}: ${episode.title}'),
+                          title: Text(
+                            'E${episode.episodeNumber}: ${episode.title}',
+                          ),
                           leading: Image.network(episode.imageUrl),
                           subtitle: Text(
                             "${episode.releaseDate} - ${episode.duration} min",
@@ -203,7 +242,10 @@ class _SeasonsTabState extends State<SeasonsTab> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           trailing: const Icon(Icons.arrow_forward),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 32.0,
+                            vertical: 8.0,
+                          ),
                           onTap: () {
                             if (kDebugMode) {
                               print('Tapped on ${episode.title}');
@@ -220,11 +262,15 @@ class _SeasonsTabState extends State<SeasonsTab> {
                       },
                     ),
                   )
-                else if (episodesForThisSeason != null && episodesForThisSeason.isEmpty && !isCurrentlyLoadingEpisodes)
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Center(child: Text('Aucun épisode trouvé pour cette saison.')),
-                    )
+                else if (episodesForThisSeason != null &&
+                    episodesForThisSeason.isEmpty &&
+                    !isCurrentlyLoadingEpisodes)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text('Aucun épisode trouvé pour cette saison.'),
+                    ),
+                  ),
               ],
             );
           },

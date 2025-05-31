@@ -15,8 +15,10 @@ class _CharactersTabState extends State<CharactersTab> {
   String? _selectedLetter; // Pour stocker la lettre sélectionnée, null = tous
 
   // Liste des lettres pour le filtre
-  final List<String> _alphabet =
-  List.generate(26, (index) => String.fromCharCode('A'.codeUnitAt(0) + index));
+  final List<String> _alphabet = List.generate(
+    26,
+    (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
+  );
 
   // Fonction pour construire la requête Firestore dynamiquement
   Query _buildCharactersQuery() {
@@ -52,9 +54,14 @@ class _CharactersTabState extends State<CharactersTab> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _selectedLetter == null
-                      ? Theme.of(context).colorScheme.primaryContainer // Couleur pour l'état sélectionné
+                      ? Theme.of(context)
+                            .colorScheme
+                            .primaryContainer // Couleur pour l'état sélectionné
                       : null, // Couleur par défaut
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   textStyle: const TextStyle(fontSize: 14),
                 ),
                 onPressed: () {
@@ -74,8 +81,12 @@ class _CharactersTabState extends State<CharactersTab> {
                     backgroundColor: _selectedLetter == letter
                         ? Theme.of(context).colorScheme.primaryContainer
                         : null,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    minimumSize: const Size(30, 30), // Pour rendre les boutons plus petits
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    minimumSize: const Size(30, 30),
+                    // Pour rendre les boutons plus petits
                     textStyle: const TextStyle(fontSize: 14),
                   ),
                   onPressed: () {
@@ -100,14 +111,17 @@ class _CharactersTabState extends State<CharactersTab> {
         _buildLetterSelector(), // Ajout du sélecteur de lettres
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: _buildCharactersQuery().snapshots(), // Utilise la requête dynamique
+            stream: _buildCharactersQuery().snapshots(),
+            // Utilise la requête dynamique
             builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
               if (snapshot.hasError) {
                 // Affiche l'erreur Firestore pour le débogage si nécessaire
                 if (kDebugMode) {
                   print("Erreur Firestore: ${snapshot.error}");
                 }
-                return const Center(child: Text('Quelque chose s\'est mal passé...'));
+                return const Center(
+                  child: Text('Quelque chose s\'est mal passé...'),
+                );
               }
 
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -116,9 +130,12 @@ class _CharactersTabState extends State<CharactersTab> {
 
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return Center(
-                    child: Text(_selectedLetter == null
+                  child: Text(
+                    _selectedLetter == null
                         ? 'Aucun personnage trouvé.'
-                        : 'Aucun personnage trouvé pour la lettre "$_selectedLetter".'));
+                        : 'Aucun personnage trouvé pour la lettre "$_selectedLetter".',
+                  ),
+                );
               }
 
               return ListView.builder(
@@ -130,18 +147,20 @@ class _CharactersTabState extends State<CharactersTab> {
                     title: Text("${character.firstName} ${character.lastName}"),
                     leading: character.imageUrl.isNotEmpty
                         ? Image.network(
-                      character.imageUrl,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.person, size: 50);
-                      },
-                    )
+                            character.imageUrl,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.person, size: 50);
+                            },
+                          )
                         : const Icon(Icons.person, size: 50),
                     onTap: () {
                       if (kDebugMode) {
-                        print('Tapped on ${character.firstName} (ID: ${character.id})');
+                        print(
+                          'Tapped on ${character.firstName} (ID: ${character.id})',
+                        );
                       }
                       // Navigator.push(context, MaterialPageRoute(builder: (context) => CharacterDetailPage(character: character)));
                     },
