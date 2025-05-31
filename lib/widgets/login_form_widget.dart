@@ -72,7 +72,7 @@ class _LoginFormState extends State<LoginForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: simpsonsTheme.colorScheme.error,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } catch (e) {
