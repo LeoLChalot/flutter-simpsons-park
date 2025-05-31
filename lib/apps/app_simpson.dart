@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../pages/tabs/characters_tab.dart';
+import 'package:simpsons_park/widgets/drawer_custom.dart';
+import '../pages/tabs/overview_tab.dart';
 import '../pages/tabs/seasons_tab.dart';
 import '../widgets/appbar_custom.dart';
-import '../widgets/drawer_user.dart';
 
 class AppSimpson extends StatefulWidget {
   const AppSimpson({super.key});
@@ -17,11 +17,10 @@ class _AppSimpsonState extends State<AppSimpson> {
 
   static const List<Widget> _pagesOptions = <Widget>[
     CharactersTab(),
-    // EpisodesTab(),
     SeasonsTab(),
   ];
 
-  void _onItemAimed(int index) {
+  void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -30,26 +29,33 @@ class _AppSimpsonState extends State<AppSimpson> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBarCustom(title: title),
-      drawer: DrawerUser(),
+      appBar: AppBarCustom(),
+      drawer: DrawerCustom(),
       body: IndexedStack(index: _selectedIndex, children: _pagesOptions),
       bottomNavigationBar: BottomNavigationBar(
+
         items: const <BottomNavigationBarItem>[
+
+          // == Liste des personnages
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Personnages',
           ),
-          // BottomNavigationBarItem(icon: Icon(Icons.tv), label: 'Episodes'),
+
+          // == Liste des saisons
           BottomNavigationBarItem(
               icon: Icon(Icons.tv),
               label: 'Saisons'
           ),
+
         ],
+
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[900],
         unselectedItemColor: Colors.amber[500],
         elevation: 15,
-        onTap: _onItemAimed,
+        onTap: _onItemTapped,
+
       ),
     );
   }

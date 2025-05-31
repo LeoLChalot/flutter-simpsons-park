@@ -11,16 +11,18 @@ class DrawerUser extends StatefulWidget {
 }
 
 class _DrawerUserState extends State<DrawerUser> {
+  final User? _currentUser = FirebaseAuth.instance.currentUser;
+  final int _delayDuration = 1;
 
-  // DECONNEXION
+  // FIREBASE DECONNEXION
   Future<void> _signOut() async {
     try {
       await FirebaseAuth.instance.signOut();
 
       if (!mounted) return;
 
-
-      Navigator.of(context).pushNamedAndRemoveUntil(Routes.accessForm,
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        Routes.accessForm,
         (Route<dynamic> route) => false,
       );
 
@@ -49,6 +51,7 @@ class _DrawerUserState extends State<DrawerUser> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('User: $_currentUser');
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -62,11 +65,14 @@ class _DrawerUserState extends State<DrawerUser> {
             ),
             child: Center(child: Text('')),
           ),
+
+          // ============== MENU ==================
+          // == ACCUEIL
           ListTile(
             title: const Text('Accueil'),
             onTap: () {
               Navigator.pushNamed(context, Routes.loading);
-              Future.delayed(const Duration(seconds: 2), () {
+              Future.delayed(Duration(seconds: _delayDuration), () {
                 if (!mounted) return;
                 if (Navigator.canPop(context)) {
                   Navigator.pop(context);
@@ -76,40 +82,48 @@ class _DrawerUserState extends State<DrawerUser> {
             },
             leading: const Icon(Icons.home),
           ),
-          ListTile(
-            title: const Text('Connexion'),
-            onTap: () {
-              Navigator.pushNamed(context, Routes.loading);
-              Future.delayed(const Duration(seconds: 2), () {
-                if (!mounted) return;
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-                Navigator.pushNamed(context, Routes.accessForm);
-              });
-            },
-            leading: const Icon(Icons.login),
-          ),
-          ListTile(
-            title: const Text('Dashboard'),
-            onTap: () {
-              Navigator.pushNamed(context, Routes.loading);
-              Future.delayed(const Duration(seconds: 2), () {
-                if (!mounted) return;
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-                Navigator.pushNamed(context, Routes.dashboard);
-              });
-            },
-            leading: const Icon(Icons.dashboard),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Déconnexion'),
-            onTap: _signOut, // Appeler la méthode _signOut
-          ),
+          // == LOGIN
+          if (_currentUser == null)
+            ListTile(
+              title: const Text('Connexion'),
+              onTap: () {
+                Navigator.pushNamed(context, Routes.loading);
+                Future.delayed(Duration(seconds: _delayDuration), () {
+                  if (!mounted) return;
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                  Navigator.pushNamed(context, Routes.accessForm);
+                });
+              },
+              leading: const Icon(Icons.login),
+            ),
+          // == DASHBOARD
+          if (_currentUser != null)
+            ListTile(
+              title: const Text('Dashboard'),
+              onTap: () {
+                Navigator.pushNamed(context, Routes.loading);
+                Future.delayed(Duration(seconds: _delayDuration), () {
+                  if (!mounted) return;
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                  Navigator.pushNamed(context, Routes.dashboard);
+                });
+              },
+              leading: const Icon(Icons.dashboard),
+            ),
+          if (_currentUser != null)
+            const Divider(),
+            // == LOGOUT
+          if (_currentUser != null)
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Déconnexion'),
+              onTap: _signOut,
+            ),
+
         ],
       ),
     );

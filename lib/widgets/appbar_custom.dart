@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'appbar_leading.dart';
 
 class AppBarCustom extends StatelessWidget implements PreferredSizeWidget{
-  final String title;
   final double height;
 
   const AppBarCustom({
     super.key,
-    required this.title,
     this.height = kToolbarHeight});
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      elevation: 12,
+      elevation: 5,
+      shadowColor: Colors.black87,
       centerTitle: true,
       leading: AppBarLeading(),
-      title: Text(title),
+      title: Image.asset('assets/images/simpsons-park-logo.png',
+        height: kToolbarHeight - 20,),
     );
   }
 

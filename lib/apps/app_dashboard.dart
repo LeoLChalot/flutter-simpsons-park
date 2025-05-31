@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-
-import '../pages/tabs/admin/add_character_tab.dart';
-import '../pages/tabs/admin/add_episode_tab.dart';
-import '../pages/tabs/admin/add_season_tab.dart';
+import 'package:simpsons_park/pages/tabs/admin/news_tab.dart';
+import '../pages/tabs/admin/dashboard_overview_tab.dart';
 import '../pages/tabs/admin/profile_tab.dart';
 import '../widgets/appbar_custom.dart';
-import '../widgets/drawer_admin.dart';
+import '../widgets/drawer_custom.dart';
 
 class AppDashboard extends StatefulWidget {
   const AppDashboard({super.key});
@@ -19,13 +17,12 @@ class _AppDashboardState extends State<AppDashboard> {
   String title = 'Simpsons Park 2.0 ADMIN';
 
   static const List<Widget> _pagesOptions = <Widget>[
-    AddCharacterTab(),
-    AddEpisodeTab(),
-    AddSeasonTab(),
+    DashboardOverviewTab(),
+    NewsTab(),
     ProfileTab(),
   ];
 
-  void _onItemAimed(int index) {
+  void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -34,28 +31,33 @@ class _AppDashboardState extends State<AppDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBarCustom(title: title),
-      drawer: DrawerAdmin(),
+      appBar: AppBarCustom(),
+      drawer: DrawerCustom(),
       body: IndexedStack(index: _selectedIndex, children: _pagesOptions),
       bottomNavigationBar: BottomNavigationBar(
+
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '+ Personnage',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.tv), label: '+ Episode'),
-          BottomNavigationBarItem(icon: Icon(Icons.tv), label: '+ Saison'),
+
+          // == Résumé des données enregistrées
+          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Résumé'),
+
+          // == Listes des articles
+          BottomNavigationBarItem(icon: Icon(Icons.newspaper), label: 'News'),
+
+          // == Profile de l'utilisateur connecté
           BottomNavigationBarItem(
             icon: Icon(Icons.verified_user),
             label: 'Profil',
           ),
+
         ],
+
         showUnselectedLabels: true,
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.amber[900],
         unselectedItemColor: Colors.amber[500],
         elevation: 15,
-        onTap: _onItemAimed,
+        onTap: _onItemTapped,
       ),
     );
   }
