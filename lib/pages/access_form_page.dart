@@ -15,19 +15,16 @@ class AccessFormPage extends StatefulWidget {
 
 class _AccessFormPageState extends State<AccessFormPage> {
   bool _showLoginForm = true;
-  late String _title;
 
 
     void _toggleFormType() {
     setState(() {
       _showLoginForm = !_showLoginForm;
-      _title = _showLoginForm ? 'Page de Connexion' : 'Page d\'Inscription';
     });
   }
 
   @override
   void initState() {
-    _title = 'Page de Connexion';
     super.initState();
   }
 

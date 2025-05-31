@@ -33,11 +33,11 @@ class _LoginFormState extends State<LoginForm> {
     });
 
     try {
-      final UserCredential userCredential =
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
 
       final User? user = userCredential.user;
 
@@ -49,12 +49,15 @@ class _LoginFormState extends State<LoginForm> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-            Text('Connecté en tant que : ${user.email} (ID: ${user.uid})'),
+            content: Text(
+              'Connecté en tant que : ${user.email} (ID: ${user.uid})',
+            ),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pushNamedAndRemoveUntil(Routes.home, (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(Routes.home, (route) => false);
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -83,7 +86,9 @@ class _LoginFormState extends State<LoginForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Une erreur inattendue est survenue.'),
-          backgroundColor: simpsonsTheme.colorScheme.error, // Utilise la couleur d'erreur du thème
+          backgroundColor: simpsonsTheme
+              .colorScheme
+              .error, // Utilise la couleur d'erreur du thème
         ),
       );
     } finally {
@@ -97,8 +102,8 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // Récupère le thème actuel
-    final colorScheme = theme.colorScheme; // Accès direct au ColorScheme
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.all(20.0),
@@ -140,30 +145,30 @@ class _LoginFormState extends State<LoginForm> {
           ElevatedButton(
             onPressed: _isLoading ? null : _signIn,
             style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                backgroundColor: colorScheme.secondary,
-                foregroundColor: colorScheme.onSecondary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                )
+              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+              backgroundColor: colorScheme.secondary,
+              foregroundColor: colorScheme.onSecondary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
             child: _isLoading
                 ? SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onSecondary),
-              ),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colorScheme.onSecondary,
+                      ),
+                    ),
+                  )
                 : const Text('Se connecter'),
           ),
           const SizedBox(height: 15),
           TextButton(
             onPressed: widget.onSwitchToRegister,
-            style: TextButton.styleFrom(
-              foregroundColor: colorScheme.secondary,
-            ),
+            style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
             child: const Text("Pas encore de compte ? M'inscrire"),
           ),
         ],
