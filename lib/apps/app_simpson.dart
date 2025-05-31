@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:simpsons_park/widgets/drawer_custom.dart';
-import '../pages/tabs/overview_tab.dart';
-import '../pages/tabs/seasons_tab.dart';
-import '../widgets/appbar_custom.dart';
+import 'package:simpsons_park/pages/tabs/characters_tab.dart';
+import 'package:simpsons_park/pages/tabs/seasons_tab.dart';
+import 'package:simpsons_park/widgets/appbar_custom.dart';
 
 class AppSimpson extends StatefulWidget {
   const AppSimpson({super.key});
@@ -16,7 +16,7 @@ class _AppSimpsonState extends State<AppSimpson> {
   String title = 'Simpsons Park 2.0';
 
   static const List<Widget> _pagesOptions = <Widget>[
-    CharactersTab(),
+    ChatactersTab(),
     SeasonsTab(),
   ];
 

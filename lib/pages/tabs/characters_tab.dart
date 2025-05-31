@@ -1,17 +1,16 @@
-// lib/pages/tabs/dashboard_overview_tab.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/character_model.dart';
 
-class CharactersTab extends StatefulWidget {
-  const CharactersTab({super.key});
+class ChatactersTab extends StatefulWidget {
+  const ChatactersTab({super.key});
 
   @override
-  State<CharactersTab> createState() => _CharactersTabState();
+  State<ChatactersTab> createState() => _ChatactersTabState();
 }
 
-class _CharactersTabState extends State<CharactersTab> {
+class _ChatactersTabState extends State<ChatactersTab> {
   String? _selectedLetter;
 
   // Liste des lettres pour le filtre
