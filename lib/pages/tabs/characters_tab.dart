@@ -1,18 +1,17 @@
-// lib/pages/tabs/characters_tab.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/character_model.dart';
 
-class CharactersTab extends StatefulWidget {
-  const CharactersTab({super.key});
+class ChatactersTab extends StatefulWidget {
+  const ChatactersTab({super.key});
 
   @override
-  State<CharactersTab> createState() => _CharactersTabState();
+  State<ChatactersTab> createState() => _ChatactersTabState();
 }
 
-class _CharactersTabState extends State<CharactersTab> {
-  String? _selectedLetter; // Pour stocker la lettre sélectionnée, null = tous
+class _ChatactersTabState extends State<ChatactersTab> {
+  String? _selectedLetter;
 
   // Liste des lettres pour le filtre
   final List<String> _alphabet = List.generate(
@@ -20,95 +19,40 @@ class _CharactersTabState extends State<CharactersTab> {
     (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
   );
 
-  // Fonction pour construire la requête Firestore dynamiquement
+  // Récupérer la liste des documents de la collection "characters"
   Query _buildCharactersQuery() {
     Query query = FirebaseFirestore.instance.collection('characters');
 
     if (_selectedLetter != null && _selectedLetter!.isNotEmpty) {
-      // Filtrer par la lettre sélectionnée sur le champ 'lastName'
-      // Ce filtre est sensible à la casse. 'A' ne trouvera pas 'apple'.
-      // Pour un filtre insensible à la casse, voir les notes plus bas.
       String startAt = _selectedLetter!;
-      // \uf8ff est un caractère Unicode très élevé, utilisé pour simuler "commence par"
-      String endAt = '${_selectedLetter!}\uf8ff';
+      String endAt =
+          '${_selectedLetter!}\uf8ff'; // caractère élevé pour indiquer la fin
 
       query = query
           .where('lastName', isGreaterThanOrEqualTo: startAt)
           .where('lastName', isLessThanOrEqualTo: endAt);
     }
 
-    // Appliquer toujours le tri
     query = query.orderBy('lastName').orderBy('firstName');
     return query;
   }
 
-  Widget _buildLetterSelector() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _selectedLetter == null
-                      ? Theme.of(context)
-                            .colorScheme
-                            .primaryContainer // Couleur pour l'état sélectionné
-                      : null, // Couleur par défaut
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  textStyle: const TextStyle(fontSize: 14),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _selectedLetter = null; // Réinitialiser le filtre
-                  });
-                },
-                child: const Text('Tous'),
-              ),
-            ),
-            // Boutons pour chaque lettre
-            ..._alphabet.map((letter) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _selectedLetter == letter
-                        ? Theme.of(context).colorScheme.primaryContainer
-                        : null,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    minimumSize: const Size(30, 30),
-                    // Pour rendre les boutons plus petits
-                    textStyle: const TextStyle(fontSize: 14),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _selectedLetter = letter;
-                    });
-                  },
-                  child: Text(letter),
-                ),
-              );
-            }),
-          ],
-        ),
+  // == Widget principal
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _buildCharactersList(),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // == Widget Liste des personnages
+  Widget _buildCharactersList() {
     return Column(
       children: [
-        _buildLetterSelector(), // Ajout du sélecteur de lettres
+        _buildLetterSelector(),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: _buildCharactersQuery().snapshots(),
@@ -171,6 +115,69 @@ class _CharactersTabState extends State<CharactersTab> {
           ),
         ),
       ],
+    );
+  }
+
+  // == Widget Pagination alphabétique
+  Widget _buildLetterSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _selectedLetter == null
+                      ? Theme.of(context)
+                            .colorScheme
+                            .primaryContainer // Couleur pour l'état sélectionné
+                      : null, // Couleur par défaut
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  textStyle: const TextStyle(fontSize: 14),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _selectedLetter = null; // Réinitialiser le filtre
+                  });
+                },
+                child: const Text('Tous'),
+              ),
+            ),
+            // Boutons pour chaque lettre
+            ..._alphabet.map((letter) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _selectedLetter == letter
+                        ? Theme.of(context).colorScheme.primaryContainer
+                        : null,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    minimumSize: const Size(30, 30),
+                    // Pour rendre les boutons plus petits
+                    textStyle: const TextStyle(fontSize: 14),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _selectedLetter = letter;
+                    });
+                  },
+                  child: Text(letter),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 }

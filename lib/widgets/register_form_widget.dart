@@ -73,8 +73,6 @@ class _RegisterFormState extends State<RegisterForm> {
       if (kDebugMode) {
         print(e);
       }
-
-
     } finally {
       if (mounted) {
         setState(() {
@@ -86,6 +84,8 @@ class _RegisterFormState extends State<RegisterForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -93,46 +93,63 @@ class _RegisterFormState extends State<RegisterForm> {
         children: <Widget>[
           Text(
             'Inscription',
-            style: Theme.of(context).textTheme.headlineMedium,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           TextField(
             controller: _emailController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Email',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
             keyboardType: TextInputType.emailAddress,
+            style: TextStyle(color: colorScheme.onSurface),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
           TextField(
             controller: _passwordController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Mot de passe',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
             obscureText: true,
+            style: TextStyle(color: colorScheme.onSurface),
           ),
           const SizedBox(height: 30),
           ElevatedButton(
             onPressed: _isLoading ? null : onSubmit,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+              backgroundColor: colorScheme.secondary,
+              foregroundColor: colorScheme.onSecondary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
             child: _isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colorScheme.onSecondary,
+                      ),
                     ),
                   )
                 : const Text('M\'inscrire'),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
           TextButton(
-            onPressed: widget.onSwitchToLogin, // Accéder via widget.
+            onPressed: widget.onSwitchToLogin,
+            style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
             child: const Text('Déjà un compte ? Se connecter'),
           ),
         ],

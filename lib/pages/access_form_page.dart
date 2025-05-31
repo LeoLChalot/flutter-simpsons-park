@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:simpsons_park/widgets/drawer_custom.dart';
 import 'package:simpsons_park/widgets/drawer_user.dart';
 
+import '../widgets/appbar_custom.dart';
 import '../widgets/login_form_widget.dart';
 import '../widgets/register_form_widget.dart';
 
@@ -14,6 +16,7 @@ class AccessFormPage extends StatefulWidget {
 class _AccessFormPageState extends State<AccessFormPage> {
   bool _showLoginForm = true;
 
+
     void _toggleFormType() {
     setState(() {
       _showLoginForm = !_showLoginForm;
@@ -21,12 +24,15 @@ class _AccessFormPageState extends State<AccessFormPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_showLoginForm ? 'Page de Connexion' : 'Page d\'Inscription'),
-      ),
-      drawer: DrawerUser(),
+      appBar: AppBarCustom(),
+      drawer: DrawerCustom(),
       body: Center(
         child: SingleChildScrollView(
           child: _showLoginForm

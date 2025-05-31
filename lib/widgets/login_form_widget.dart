@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
-import '../utils/routes.dart';
+import '../utils/routes.dart'; // Assure-toi que ce chemin est correct
+// Importer simpsons_color_scheme.dart si tu as besoin d'accéder directement aux couleurs,
+// mais il est préférable de passer par Theme.of(context)
+import '../utils/simpsons_color_scheme.dart';
 
 class LoginForm extends StatefulWidget {
   final VoidCallback onSwitchToRegister;
@@ -31,11 +33,11 @@ class _LoginFormState extends State<LoginForm> {
     });
 
     try {
-      // Utiliser signInWithEmailAndPassword pour la connexion standard
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
 
       final User? user = userCredential.user;
 
@@ -47,11 +49,15 @@ class _LoginFormState extends State<LoginForm> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Connecté en tant que : ${user.email} (ID: ${user.uid})'),
+            content: Text(
+              'Connecté en tant que : ${user.email} (ID: ${user.uid})',
+            ),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pushNamed(context, Routes.home);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil(Routes.home, (route) => false);
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -63,24 +69,26 @@ class _LoginFormState extends State<LoginForm> {
       } else if (e.code == 'invalid-email') {
         message = 'Format d\'email invalide.';
       }
-      if(kDebugMode){
+      if (kDebugMode) {
         print('FirebaseAuthException: ${e.code} - ${e.message}');
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      if(kDebugMode){
+      if (kDebugMode) {
         print('Erreur de connexion inattendue: $e');
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Une erreur inattendue est survenue.'),
-          backgroundColor: Colors.red,
+          content: const Text('Une erreur inattendue est survenue.'),
+          backgroundColor: simpsonsTheme
+              .colorScheme
+              .error, // Utilise la couleur d'erreur du thème
         ),
       );
     } finally {
@@ -94,47 +102,73 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text('Connexion', style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 20),
+          Text(
+            'Connexion',
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 24),
           TextField(
             controller: _emailController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Email',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
             keyboardType: TextInputType.emailAddress,
+            style: TextStyle(color: colorScheme.onSurface),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           TextField(
             controller: _passwordController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Mot de passe',
-              border: OutlineInputBorder(),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
             obscureText: true,
+            style: TextStyle(color: colorScheme.onSurface),
           ),
           const SizedBox(height: 30),
           ElevatedButton(
             onPressed: _isLoading ? null : _signIn,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+              backgroundColor: colorScheme.secondary,
+              foregroundColor: colorScheme.onSecondary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
             child: _isLoading
-                ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-            )
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colorScheme.onSecondary,
+                      ),
+                    ),
+                  )
                 : const Text('Se connecter'),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
           TextButton(
             onPressed: widget.onSwitchToRegister,
+            style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
             child: const Text("Pas encore de compte ? M'inscrire"),
           ),
         ],
