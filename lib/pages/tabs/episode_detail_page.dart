@@ -7,10 +7,7 @@ import 'package:simpsons_park/models/character_model.dart';
 class EpisodeDetailPage extends StatefulWidget {
   final Episode episode;
 
-  const EpisodeDetailPage({
-    super.key,
-    required this.episode,
-  });
+  const EpisodeDetailPage({super.key, required this.episode});
 
   @override
   State<EpisodeDetailPage> createState() => _EpisodeDetailPageState();
@@ -34,7 +31,9 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
       _characterLoadError = null;
     });
     try {
-      final characters = await widget.episode.getOrLoadCharacters(FirebaseFirestore.instance);
+      final characters = await widget.episode.getOrLoadCharacters(
+        FirebaseFirestore.instance,
+      );
       if (mounted) {
         setState(() {
           _loadedCharacters = characters;
@@ -43,7 +42,9 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
       }
     } catch (e) {
       if (kDebugMode) {
-        print("Erreur lors du chargement des personnages pour l'épisode ${widget.episode.id}: $e");
+        print(
+          "Erreur lors du chargement des personnages pour l'épisode ${widget.episode.id}: $e",
+        );
       }
       if (mounted) {
         setState(() {
@@ -82,7 +83,9 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
                     return Container(
                       height: 200,
                       color: Colors.grey[300],
-                      child: const Center(child: Icon(Icons.broken_image, size: 50)),
+                      child: const Center(
+                        child: Icon(Icons.broken_image, size: 50),
+                      ),
                     );
                   },
                   loadingBuilder: (context, child, loadingProgress) {
@@ -111,11 +114,24 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
               spacing: 8.0,
               runSpacing: 4.0,
               children: <Widget>[
-                _buildInfoChip(context, Icons.tv_outlined, 'S${episode.seasonNumber.toString().padLeft(2, '0')} E${episode.episodeNumber.toString().padLeft(2, '0')}'),
+                _buildInfoChip(
+                  context,
+                  Icons.tv_outlined,
+                  'S${episode.seasonNumber.toString().padLeft(2, '0')} E${episode.episodeNumber.toString().padLeft(2, '0')}',
+                ),
                 if (episode.releaseDate.isNotEmpty)
-                  _buildInfoChip(context, Icons.calendar_today_outlined, episode.releaseDate), // La date est déjà un String formaté
+                  _buildInfoChip(
+                    context,
+                    Icons.calendar_today_outlined,
+                    episode.releaseDate,
+                  ),
+                // La date est déjà un String formaté
                 if (episode.duration.isNotEmpty)
-                  _buildInfoChip(context, Icons.timer_outlined, '${episode.duration} min'),
+                  _buildInfoChip(
+                    context,
+                    Icons.timer_outlined,
+                    '${episode.duration} min',
+                  ),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -123,7 +139,9 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
             // Synopsis
             Text(
               "Synopsis :",
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8.0),
             SelectableText(
@@ -140,7 +158,9 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
             // Section Personnages
             Text(
               "Personnages présents :",
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8.0),
             _buildCharactersSection(),
@@ -154,23 +174,41 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
 
   Widget _buildInfoChip(BuildContext context, IconData icon, String label) {
     return Chip(
-      avatar: Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSecondaryContainer),
-      label: Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSecondaryContainer)),
-      backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.7),
+      avatar: Icon(
+        icon,
+        size: 16,
+        color: Theme.of(context).colorScheme.onSecondaryContainer,
+      ),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSecondaryContainer,
+        ),
+      ),
+      backgroundColor: Theme.of(
+        context,
+      ).colorScheme.secondaryContainer.withOpacity(0.7),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
     );
   }
 
   Widget _buildCharactersSection() {
     if (_isLoadingCharacters) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.all(8.0),
-        child: CircularProgressIndicator(),
-      ));
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     if (_characterLoadError != null) {
-      return Center(child: Text(_characterLoadError!, style: TextStyle(color: Theme.of(context).colorScheme.error)));
+      return Center(
+        child: Text(
+          _characterLoadError!,
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      );
     }
 
     if (_loadedCharacters == null || _loadedCharacters!.isEmpty) {
@@ -181,16 +219,22 @@ class _EpisodeDetailPageState extends State<EpisodeDetailPage> {
       spacing: 8.0,
       runSpacing: 4.0,
       children: _loadedCharacters!.map((character) {
-        String characterName = "${character.firstName} ${character.lastName}".trim();
+        String characterName = "${character.firstName} ${character.lastName}"
+            .trim();
         if (characterName.isEmpty) {
-          characterName = character.pseudo.isNotEmpty ? character.pseudo : "Personnage inconnu";
+          characterName = character.pseudo.isNotEmpty
+              ? character.pseudo
+              : "Personnage inconnu";
         }
         return Chip(
           avatar: character.imageUrl.isNotEmpty
               ? CircleAvatar(
-            backgroundImage: NetworkImage(character.imageUrl),
-            onBackgroundImageError: (e,s) => const Icon(Icons.person, size: 18), // Fallback si l'image du perso ne charge pas
-          )
+                  backgroundImage: NetworkImage(character.imageUrl),
+                  onBackgroundImageError: (e, s) => const Icon(
+                    Icons.person,
+                    size: 18,
+                  ), // Fallback si l'image du perso ne charge pas
+                )
               : const CircleAvatar(child: Icon(Icons.person_outline, size: 18)),
           label: Text(characterName),
         );
