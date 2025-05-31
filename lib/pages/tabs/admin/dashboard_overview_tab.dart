@@ -113,7 +113,7 @@ class _DashboardOverviewTabState extends State<DashboardOverviewTab> {
                         return Text(
                           'Erreur de chargement',
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.red,
+                            color: Theme.of(context).colorScheme.error,
                             fontWeight: FontWeight.bold,
                           ),
                         );
