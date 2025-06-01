@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../services/auth_service.dart';
+import 'package:simpsons_park/services/auth_service.dart';
 
 class FormRegisterWidge extends StatefulWidget {
   final VoidCallback onSwitchToLogin;

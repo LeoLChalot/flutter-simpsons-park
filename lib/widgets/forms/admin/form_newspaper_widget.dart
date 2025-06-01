@@ -1,10 +1,6 @@
-// lib/widgets/form_newspaper_widget.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// Importer le modèle si tu l'as mis dans un fichier séparé
-// import '../models/newspaper_model.dart'; // Adapte le chemin si nécessaire
 
 class FormNewspaperWidget extends StatefulWidget {
   const FormNewspaperWidget({super.key});
@@ -19,9 +15,9 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
   final _subtitleController = TextEditingController();
   final _bodyController = TextEditingController();
 
-  bool _signWithEmail = false; // État de la checkbox
+  bool _signWithEmail = false;
   bool _isLoading =
-      false; // Pour l'indicateur de chargement lors de la soumission
+      false;
 
   User? get _currentUser => FirebaseAuth.instance.currentUser;
 
@@ -35,10 +31,10 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
-      return; // Ne rien faire si le formulaire n'est pas valide
+      return;
     }
 
-    if (_isLoading) return; // Éviter les soumissions multiples
+    if (_isLoading) return;
 
     setState(() {
       _isLoading = true;
@@ -49,13 +45,12 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
       authorEmailValue = _currentUser!.email;
     }
 
-    // Création de l'objet ou du Map à envoyer à Firestore
     Map<String, dynamic> newspaperData = {
       'title': _titleController.text.trim(),
       'subtitle': _subtitleController.text.trim(),
       'body': _bodyController.text.trim(),
-      'authorEmail': authorEmailValue, // Peut être null
-      'createdAt': Timestamp.now(), // Date et heure actuelles
+      'authorEmail': authorEmailValue,
+      'createdAt': Timestamp.now(),
     };
 
     try {

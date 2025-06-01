@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../models/newspaper_model.dart';
+import 'package:simpsons_park/models/newspaper_model.dart';
 import 'package:share_plus/share_plus.dart';
 
 class NewspaperDetailPage extends StatelessWidget {
@@ -8,15 +8,12 @@ class NewspaperDetailPage extends StatelessWidget {
 
   const NewspaperDetailPage({super.key, required this.article});
 
-  // Méthode pour un vrai partage d'article
+
   Future<void> _shareArticle(BuildContext context) async {
     final String articleTitle = article.title;
-    final String shareText =
-        "J'ai lu cet article intéressant sur Simpsons Park : \"$articleTitle\"";
     final String articleUrl =
         "https://simpsonspark.example.com/articles/${article.id ?? articleTitle.replaceAll(' ', '-').toLowerCase()}";
     final String subject = "Article : $articleTitle";
-    final box = context.findRenderObject() as RenderBox?;
 
     try {
       final ShareResult result = await SharePlus.instance.share(
@@ -35,6 +32,7 @@ class NewspaperDetailPage extends StatelessWidget {
         if (kDebugMode) {
           print('Partage de "$articleTitle" non disponible.');
         }
+        if(!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Aucune application de partage disponible.'),
@@ -45,6 +43,7 @@ class NewspaperDetailPage extends StatelessWidget {
       if (kDebugMode) {
         print('Erreur lors du partage de "$articleTitle": $e');
       }
+      if(!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Erreur lors du partage.')));
@@ -101,7 +100,7 @@ class NewspaperDetailPage extends StatelessWidget {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    article.author ?? 'Membre de la communauté d\'admin',
+                    article.authorEmail ?? 'Membre de la communauté d\'admin',
                     style: textTheme.bodySmall?.copyWith(
                       color: Colors.grey[700],
                     ),

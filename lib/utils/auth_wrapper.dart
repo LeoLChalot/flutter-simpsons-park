@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:simpsons_park/pages/access_form_page.dart';
 
-import '../apps/app_simpson.dart';
+import 'package:simpsons_park/apps/app_simpson.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});

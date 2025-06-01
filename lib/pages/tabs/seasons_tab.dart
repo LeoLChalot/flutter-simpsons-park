@@ -1,10 +1,9 @@
-// lib/pages/tabs/seasons_tab.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:simpsons_park/models/season_model.dart';
 import 'package:simpsons_park/models/episode_model.dart';
-import 'episode_detail_page.dart';
+import 'package:simpsons_park/pages/episode_detail_page.dart';
 
 class SeasonsTab extends StatefulWidget {
   const SeasonsTab({super.key});
@@ -14,145 +13,224 @@ class SeasonsTab extends StatefulWidget {
 }
 
 class _SeasonsTabState extends State<SeasonsTab> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Stream<QuerySnapshot<Map<String, dynamic>>> _buildSeasonsQuery() {
+    return FirebaseFirestore.instance.collection('seasons').orderBy("seasonNumber").snapshots();
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _buildEpisodesQuery(
+    String seasonId,
+  ) {
+    return FirebaseFirestore.instance
+        .collection('seasons')
+        .doc(seasonId)
+        .collection('episodes')
+        .orderBy('episodeNumber')
+        .snapshots();
+  }
 
   @override
   Widget build(BuildContext context) {
+    // On utilise StreamBuilder pour une mise à jour en temps réel
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _firestore
-          .collection('seasons')
-          .orderBy('seasonNumber')
-          .snapshots(),
-      builder: (
-          BuildContext context,
-          AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> seasonSnapshot,
+      // Ici le stream
+      stream: _buildSeasonsQuery(),
+
+      // Puis le builder (se met à jour à chaque mouvement du côté du Stream
+      builder:
+          (
+            BuildContext context, // seasonSnapshot est le nom donné au Stream
+            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> seasonSnapshot,
           ) {
-        if (seasonSnapshot.hasError) {
-          if (kDebugMode) {
-            print("Erreur Firestore (SeasonsTab - Saisons): ${seasonSnapshot.error}");
-          }
-          return const Center(
-            child: Text('Quelque chose s\'est mal passé avec les saisons.'),
-          );
-        }
+            // 1er cas : Gestion d'erreur
+            if (seasonSnapshot.hasError) {
+              if (kDebugMode) {
+                print(
+                  "Erreur Firestore (SeasonsTab - Saisons): ${seasonSnapshot.error}",
+                );
+              }
 
-        if (seasonSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (!seasonSnapshot.hasData || seasonSnapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('Aucune saison trouvée.'));
-        }
-
-        final List<Season> seasons = seasonSnapshot.data!.docs.map((doc) {
-          try {
-            return Season.fromFirestore(doc);
-          } catch (e) {
-            if (kDebugMode) {
-              print("Error creating Season from Firestore doc ${doc.id}: $e");
+              // Solution : On renvoit un message d'erreur pour l'utilisateur
+              return const Center(
+                child: Text('Quelque chose s\'est mal passé avec les saisons.'),
+              );
             }
-            return Season(
-              id: doc.id,
-              seasonNumber: 0,
-              episodeCount: 0,
-            );
-          }
-        }).toList();
 
-        return ListView.builder(
-          itemCount: seasons.length,
-          itemBuilder: (context, index) {
-            final Season season = seasons[index];
+            // 2ème cas : En attente des premières données
+            if (seasonSnapshot.connectionState == ConnectionState.waiting) {
+              // Solution : On affiche un indicateur de chargement
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            return ExpansionTile(
-              key: PageStorageKey<String>(season.id),
-              title: Text(
-                'Saison ${season.seasonNumber} - ${season.episodeCount} épisodes',
-              ),
-              children: <Widget>[
-                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _firestore
-                      .collection('seasons')
-                      .doc(season.id)
-                      .collection('episodes')
-                      .orderBy('episodeNumber')
-                      .snapshots(),
-                  builder: (
-                      BuildContext context,
-                      AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> episodeSnapshot,
-                      ) {
-                    if (episodeSnapshot.hasError) {
-                      if (kDebugMode) {
-                        print("Erreur Firestore (SeasonsTab - Episodes pour ${season.id}): ${episodeSnapshot.error}");
-                      }
-                      return const ListTile(title: Text('Erreur de chargement des épisodes.'));
-                    }
+            // 3ème cas : Le flux de données est vide
+            if (!seasonSnapshot.hasData || seasonSnapshot.data!.docs.isEmpty) {
+              // Solution : On renvoit un message pour l'utilisateur
+              return const Center(child: Text('Aucune saison trouvée.'));
+            }
 
-                    if (episodeSnapshot.connectionState == ConnectionState.waiting) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      );
-                    }
+            // Finalité : Le flux a été reçu, et n'est pas vide
+            final List<Season> seasons = seasonSnapshot.data!.docs.map(
+              (doc) {
+                // Bloc try {} catch {} pour la gestion des erreurs
+                try {
+                  return Season.fromFirestore(doc);
+                } catch (e) {
+                  if (kDebugMode) {
+                    print(
+                      "Error creating Season from Firestore doc ${doc.id}: $e",
+                    );
+                  }
+                  return Season(
+                    id: doc.id,
+                    seasonNumber: 0,
+                    episodesCount: 0,
+                    name: '',
+                  );
+                }
+              },
+            ).toList(); // On applique .toList() à seasonSnapshot.data!.docs.map
 
-                    if (!episodeSnapshot.hasData || episodeSnapshot.data!.docs.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-                        child: Center(
-                          child: Text('Aucun épisode trouvé pour cette saison.'),
-                        ),
-                      );
-                    }
+            return ListView.builder(
+              itemCount: seasons.length,
+              itemBuilder: (context, index) {
+                final Season season = seasons[index];
+                final seasonId = season.id;
+                final title =
+                    'Saison ${season.seasonNumber} - ${season.episodesCount} épisodes';
 
-                    // Lliste des ListTiles d'épisodes
-                    return Column(
-                      children: episodeSnapshot.data!.docs.map<Widget>((episodeDoc) {
-                        final Episode episode = Episode.fromFirestore(episodeDoc); // Utilise Episode.fromFirestore
-                        return ListTile(
-                          key: ValueKey(episode.id),
-                          title: Text(
-                            'E${episode.episodeNumber.toString().padLeft(2, '0')}: ${episode.title}',
-                          ),
-                          leading: episode.imageUrl.isNotEmpty
-                              ? Image.network(
-                            episode.imageUrl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.broken_image, size: 50);
-                            },
-                          )
-                              : const Icon(Icons.tv_sharp, size: 50),
-                          subtitle: Text(
-                            "${episode.releaseDate} - ${episode.duration}",
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 32.0,
-                            vertical: 8.0,
-                          ),
-                          onTap: () {
-                            if (kDebugMode) {
-                              print('Tapped on episode: ${episode.title} (ID: ${episode.id})');
+                return ExpansionTile(
+                  key: PageStorageKey<String>(seasonId),
+                  title: Text(title),
+                  children: <Widget>[
+                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: _buildEpisodesQuery(seasonId),
+                      builder:
+                          (
+                            BuildContext context,
+                            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
+                            episodeSnapshot,
+                          ) {
+                            // 1er cas : Gestion d'erreur
+                            if (episodeSnapshot.hasError) {
+                              if (kDebugMode) {
+                                print(
+                                  "Erreur Firestore (SeasonsTab - Episodes pour ${season.id}): ${episodeSnapshot.error}",
+                                );
+                              }
+                              return const ListTile(
+                                title: Text(
+                                  'Erreur de chargement des épisodes.',
+                                ),
+                              );
                             }
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EpisodeDetailPage(episode: episode),
-                              ),
+
+                            // 2ème cas : Chargement des données
+                            if (episodeSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            // 3ème cas : Pas de données
+                            if (!episodeSnapshot.hasData ||
+                                episodeSnapshot.data!.docs.isEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 32.0,
+                                  vertical: 16.0,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Aucun épisode trouvé pour cette saison.',
+                                  ),
+                                ),
+                              );
+                            }
+
+                            // Finalité : Données chargées
+                            return Column(
+                              children: episodeSnapshot.data!.docs.map<Widget>((
+                                episodeDoc,
+                              ) {
+                                final Episode episode = Episode.fromFirestore(
+                                  episodeDoc,
+                                );
+                                return ListItemEpisode(
+                                  episode: episode,
+                                  seasonNumber: season.seasonNumber,
+                                );
+                              }).toList(),
                             );
                           },
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             );
           },
+    );
+  }
+}
+
+final _trailingIcon = const Icon(Icons.arrow_forward_ios, size: 16);
+final _contentPadding = const EdgeInsets.symmetric(
+  horizontal: 32.0,
+  vertical: 8.0,
+);
+
+class ListItemEpisode extends StatelessWidget {
+  final Episode episode;
+  final int seasonNumber;
+
+  const ListItemEpisode({
+    super.key,
+    required this.episode,
+    required this.seasonNumber,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final episodeId = episode.id;
+    final episodeNumber = episode.episodeNumber.toString().padLeft(2, '0');
+    final episodeTitle = 'E$episodeNumber: ${episode.title}';
+    final episodeImage = episode.imageUrl.isNotEmpty
+        ? Image.network(
+            episode.imageUrl,
+            width: 50,
+            height: 50,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(Icons.broken_image, size: 50);
+            },
+          )
+        : const Icon(Icons.tv_sharp, size: 50);
+    final subtitleEpisode = Text(
+      "${episode.releaseDate} - ${episode.duration}",
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+    );
+    return ListTile(
+      key: ValueKey(episodeId),
+      title: Text(episodeTitle),
+      leading: episodeImage,
+      subtitle: subtitleEpisode,
+      trailing: _trailingIcon,
+      contentPadding: _contentPadding,
+      onTap: () {
+        if (kDebugMode) {
+          print('Tapped on episode: ${episode.title} (ID: $episodeId)');
+        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                EpisodeDetailPage(episode: episode, seasonNumber: seasonNumber),
+          ),
         );
       },
     );

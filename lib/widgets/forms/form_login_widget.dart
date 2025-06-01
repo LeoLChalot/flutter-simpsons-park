@@ -1,10 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../utils/routes.dart'; // Assure-toi que ce chemin est correct
-// Importer simpsons_color_scheme.dart si tu as besoin d'accéder directement aux couleurs,
-// mais il est préférable de passer par Theme.of(context)
-import '../../utils/simpsons_color_scheme.dart';
+import 'package:simpsons_park/utils/routes.dart';
+import 'package:simpsons_park/utils/simpsons_color_scheme.dart';
 
 class FormLoginWidget extends StatefulWidget {
   final VoidCallback onSwitchToRegister;

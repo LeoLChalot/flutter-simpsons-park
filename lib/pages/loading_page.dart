@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/simpsons_color_scheme.dart';
+import 'package:simpsons_park/utils/simpsons_color_scheme.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});
