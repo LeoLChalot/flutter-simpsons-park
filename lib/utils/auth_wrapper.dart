@@ -1,37 +1,25 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// auth_wrapper.dart
 import 'package:flutter/material.dart';
-import 'package:simpsons_park/pages/access_form_page.dart';
-
 import 'package:simpsons_park/apps/app_simpson.dart';
+import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:simpsons_park/apps/app_dashboard.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        }
+    final authService = Provider.of<AuthService>(context);
 
-        if (snapshot.hasError) {
-          return Scaffold(
-            body: Center(
-              child: Text('Une erreur est survenue : ${snapshot.error}'),
-            ),
-          );
-        }
+    if (authService.isLoading && authService.cognitoUser == null && authService.session == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-        if (snapshot.hasData && snapshot.data != null) {
-          return AppSimpson();
-        } else {
-          // Redirection si l'utilisateur n'est pas connecté
-          return const AccessFormPage();
-        }
-      },
-    );
+    if (authService.isAuthenticated) {
+      return const AppDashboard();
+    } else {
+      return const AppSimpson();
+    }
   }
 }
-

@@ -91,6 +91,7 @@ class _AppDashboardState extends State<AppDashboard> {
         elevation: 8.0,
         shape: const CircleBorder(),
         children: [
+          // AJOUT CHARACTER
           SpeedDialChild(
             child: const Icon(Icons.person_add_alt_1),
             backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
@@ -99,6 +100,7 @@ class _AppDashboardState extends State<AppDashboard> {
             labelStyle: const TextStyle(fontSize: 16.0),
             onTap: () => _handleSpeedDialAction('add_character'),
           ),
+          // AJOUT EPISODE
           SpeedDialChild(
             child: const Icon(Icons.movie_filter_outlined),
             backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
@@ -107,6 +109,7 @@ class _AppDashboardState extends State<AppDashboard> {
             labelStyle: const TextStyle(fontSize: 16.0),
             onTap: () => _handleSpeedDialAction('add_episode'),
           ),
+          // AJOUT ARTICLE
           SpeedDialChild(
             child: const Icon(Icons.article_outlined),
             backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -115,7 +118,7 @@ class _AppDashboardState extends State<AppDashboard> {
             labelStyle: const TextStyle(fontSize: 16.0),
             onTap: () => _handleSpeedDialAction('add_newspaper'),
           ),
-          // Tu peux ajouter une option pour "Saison" ici si tu le souhaites
+
           // SpeedDialChild(
           //   child: const Icon(Icons.video_library_outlined),
           //   backgroundColor: Colors.blueAccent,

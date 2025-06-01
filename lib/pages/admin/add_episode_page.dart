@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:simpsons_park/widgets/forms/admin/form_newspaper_widget.dart';
 
 class AddEpisodePage extends StatelessWidget {
   const AddEpisodePage({super.key});

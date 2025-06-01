@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:simpsons_park/widgets/forms/admin/form_newspaper_widget.dart';
+import 'package:simpsons_park/widgets/forms/admin/form_character_widget.dart';
 
 class AddCharacterPage extends StatelessWidget {
   const AddCharacterPage({super.key});
@@ -11,7 +11,7 @@ class AddCharacterPage extends StatelessWidget {
         title: const Text('Ajouter un personnage'),
         centerTitle: true,
       ),
-      body: Center(child:const Text("AddCharacterPage")),
+      body: FormCharacterWidget(),
     );
   }
 }

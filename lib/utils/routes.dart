@@ -1,5 +1,6 @@
 class Routes {
   static const String home = "/";
+  static const String appSimpson = "/appSimpson";
   static const String accessForm = "/accessForm";
   static const String dashboard = "/protected/dashboard";
   static const String profile = "/protected/profile";

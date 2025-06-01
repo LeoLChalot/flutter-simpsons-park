@@ -1,22 +1,23 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:simpsons_park/utils/routes.dart';
-import 'package:simpsons_park/utils/simpsons_color_scheme.dart';
+import 'package:provider/provider.dart';
+import 'package:simpsons_park/services/auth_service.dart'; // Your AuthService
 
 class FormLoginWidget extends StatefulWidget {
   final VoidCallback onSwitchToRegister;
 
-  const FormLoginWidget({super.key, required this.onSwitchToRegister});
+  const FormLoginWidget({
+    super.key,
+    required this.onSwitchToRegister,
+  });
 
   @override
   State<FormLoginWidget> createState() => _FormLoginWidgetState();
 }
 
 class _FormLoginWidgetState extends State<FormLoginWidget> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -25,151 +26,94 @@ class _FormLoginWidgetState extends State<FormLoginWidget> {
     super.dispose();
   }
 
-  Future<void> _signIn() async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _loginUser() async {
+    if (_formKey.currentState!.validate()) {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final success = await authService.signIn(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
 
-    try {
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-
-      final User? user = userCredential.user;
-
-      if (!mounted) return;
-
-      if (user != null) {
-        if (kDebugMode) {
-          print("Utilisateur connecté avec l'ID : ${user.uid}");
-        }
+      if (!success && mounted) {
+        // Error message is already handled by listening to authService.errorMessage
+        // Or you can show a specific SnackBar here if you prefer
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Connecté en tant que : ${user.email} (ID: ${user.uid})',
-            ),
-            backgroundColor: Colors.green,
+            content: Text(authService.errorMessage ?? "Login failed. Please try again."),
+            backgroundColor: Colors.red,
           ),
         );
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil(Routes.home, (route) => false);
       }
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String message = 'Erreur de connexion.';
-      if (e.code == 'user-not-found') {
-        message = 'Aucun utilisateur trouvé pour cet email.';
-      } else if (e.code == 'wrong-password') {
-        message = 'Mot de passe incorrect.';
-      } else if (e.code == 'invalid-email') {
-        message = 'Format d\'email invalide.';
-      }
-      if (kDebugMode) {
-        print('FirebaseAuthException: ${e.code} - ${e.message}');
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      if (kDebugMode) {
-        print('Erreur de connexion inattendue: $e');
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Une erreur inattendue est survenue.'),
-          backgroundColor: simpsonsTheme
-              .colorScheme
-              .error, // Utilise la couleur d'erreur du thème
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+
+      if(!mounted) return;
+      Navigator.of(context).pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    // Listen to AuthService for isLoading and errorMessage to update UI
+    final authService = Provider.of<AuthService>(context);
 
     return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            'Connexion',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text('Login', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty || !value.contains('@')) {
+                  return 'Please enter a valid email';
+                }
+                return null;
+              },
             ),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _emailController,
-            decoration: InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+              obscureText: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your password';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            // Display error message from AuthService if any
+            if (authService.errorMessage != null && !authService.isLoading)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10.0),
+                child: Text(
+                  authService.errorMessage!,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
               ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+              onPressed: authService.isLoading ? null : _loginUser,
+              child: authService.isLoading
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                  : const Text('Login'),
             ),
-            keyboardType: TextInputType.emailAddress,
-            style: TextStyle(color: colorScheme.onSurface),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _passwordController,
-            decoration: InputDecoration(
-              labelText: 'Mot de passe',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: widget.onSwitchToRegister,
+              child: const Text('Don\'t have an account? Register'),
             ),
-            obscureText: true,
-            style: TextStyle(color: colorScheme.onSurface),
-          ),
-          const SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _signIn,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-              backgroundColor: colorScheme.secondary,
-              foregroundColor: colorScheme.onSecondary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            child: _isLoading
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        colorScheme.onSecondary,
-                      ),
-                    ),
-                  )
-                : const Text('Se connecter'),
-          ),
-          const SizedBox(height: 15),
-          TextButton(
-            onPressed: widget.onSwitchToRegister,
-            style: TextButton.styleFrom(foregroundColor: colorScheme.secondary),
-            child: const Text("Pas encore de compte ? M'inscrire"),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
