@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:simpsons_park/widgets/drawer/drawer_custom.dart';
 
-import '../widgets/appbar/appbar_custom.dart';
-import '../widgets/forms/form_login_widget.dart';
-import '../widgets/forms/form_register_widget.dart';
+import 'package:simpsons_park/widgets/appbar/appbar_custom.dart';
+import 'package:simpsons_park/widgets/forms/form_login_widget.dart';
+import 'package:simpsons_park/widgets/forms/form_register_widget.dart';
 
 class AccessFormPage extends StatefulWidget {
   const AccessFormPage({super.key});

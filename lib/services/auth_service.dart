@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../utils/routes.dart';
+import 'package:simpsons_park/utils/routes.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth;
@@ -10,7 +10,6 @@ class AuthService {
   AuthService({FirebaseAuth? firebaseAuth})
     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
-  // --- Stream d'état d'authentification ---
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   User? get currentUser => _firebaseAuth.currentUser;

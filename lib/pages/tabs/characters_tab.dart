@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/character_model.dart';
+import 'package:simpsons_park/models/character_model.dart';
+import 'package:simpsons_park/pages/character_detail_page.dart';
 
 class CharactersTab extends StatefulWidget {
   const CharactersTab({super.key});
@@ -15,25 +16,27 @@ class _CharactersTabState extends State<CharactersTab> {
 
   final List<String> _alphabet = List.generate(
     26,
-    (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
+        (index) => String.fromCharCode('A'.codeUnitAt(0) + index),
   );
 
   Query _buildCharactersQuery() {
     Query query = FirebaseFirestore.instance.collection('characters');
 
     if (_selectedLetter != null && _selectedLetter!.isNotEmpty) {
-      query = query.where(
-        'searchInitials',
-        arrayContains: _selectedLetter!.toUpperCase(),
-      );
+      String startAt = _selectedLetter!;
+      String endAt = '${_selectedLetter!}\uf8ff';
+
+      query = query
+          .where('name', isGreaterThanOrEqualTo: startAt)
+          .where('name', isLessThanOrEqualTo: endAt);
     }
-    query = query.orderBy('lastName').orderBy('firstName');
+
+    query = query.orderBy('name');
     return query;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Renommer la méthode pour la cohérence
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -44,6 +47,7 @@ class _CharactersTabState extends State<CharactersTab> {
 
   Widget _buildCharactersListWithFilter() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildLetterSelector(),
         Expanded(
@@ -52,10 +56,10 @@ class _CharactersTabState extends State<CharactersTab> {
             builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
               if (snapshot.hasError) {
                 if (kDebugMode) {
-                  print("Erreur Firestore: ${snapshot.error}");
+                  print("Erreur Firestore (CharactersTab): ${snapshot.error}");
                 }
                 return const Center(
-                  child: Text('Quelque chose s\'est mal passé...'),
+                  child: Text('Quelque chose s\'est mal passé lors du chargement des personnages.'),
                 );
               }
 
@@ -76,45 +80,66 @@ class _CharactersTabState extends State<CharactersTab> {
               List<Character> characters = snapshot.data!.docs
                   .map(
                     (doc) => Character.fromFirestore(
-                      doc as DocumentSnapshot<Map<String, dynamic>>,
-                    ),
-                  )
+                  doc as DocumentSnapshot<Map<String, dynamic>>,
+                ),
+              )
                   .toList();
+
 
               return ListView.builder(
                 itemCount: characters.length,
                 itemBuilder: (context, index) {
-                  Character character = characters[index];
+                  final Character character = characters[index];
 
-                  String characterFullName =
-                      (character.firstName == '' || character.lastName == '')
-                      ? ''
-                      : '${character.firstName} ${character.lastName}';
-                  String characterTitle = characterFullName == ''
-                      ? character.pseudo
-                      : characterFullName;
+                  String characterDisplayName = character.name.trim();
+                  if (characterDisplayName.isEmpty) {
+                    characterDisplayName = character.pseudo.isNotEmpty ? character.pseudo : "Personnage inconnu";
+                  }
 
                   return ListTile(
-                    title: Text(
-                      characterTitle.isEmpty ? "Nom inconnu" : characterTitle,
-                    ),
+                    title: Text(characterDisplayName),
                     leading: character.imageUrl.isNotEmpty
-                        ? Image.network(
-                            character.imageUrl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(Icons.person, size: 50);
-                            },
-                          )
-                        : const Icon(Icons.person, size: 50),
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(4.0),
+                      child: Image.network(
+                        character.imageUrl,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                              width: 50, height: 50,
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.person, size: 30, color: Colors.grey)
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                              width: 50, height: 50,
+                              color: Colors.grey[200],
+                              child: const Center(child: CircularProgressIndicator(strokeWidth: 2,))
+                          );
+                        },
+                      ),
+                    )
+                        : Container(
+                        width: 50, height: 50,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.person, size: 30, color: Colors.grey)
+                    ),
                     onTap: () {
                       if (kDebugMode) {
                         print(
-                          'Tapped on ${character.firstName} (ID: ${character.id})',
+                          'Tapped on $characterDisplayName (ID: ${character.id})',
                         );
                       }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CharacterDetailPage(character: character),
+                        ),
+                      );
                     },
                   );
                 },
@@ -127,10 +152,8 @@ class _CharactersTabState extends State<CharactersTab> {
   }
 
   Widget _buildLetterSelector() {
-    // ... (ton code _buildLetterSelector reste inchangé)
-    // Assure-toi juste que la lettre sélectionnée est bien passée en MAJUSCULES à la requête
-    // ou que _selectedLetter est toujours une majuscule.
-    // Si _alphabet produit des majuscules, c'est bon.
+    // Ton widget _buildLetterSelector est déjà bien configuré
+    // pour mettre à jour _selectedLetter avec des majuscules.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: SingleChildScrollView(
@@ -143,11 +166,11 @@ class _CharactersTabState extends State<CharactersTab> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _selectedLetter == null
                       ? Theme.of(context).colorScheme.primaryContainer
-                      : null,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                      : Theme.of(context).elevatedButtonTheme.style?.backgroundColor?.resolve({}), // Couleur par défaut du thème
+                  foregroundColor: _selectedLetter == null
+                      ? Theme.of(context).colorScheme.onPrimaryContainer
+                      : Theme.of(context).elevatedButtonTheme.style?.foregroundColor?.resolve({}),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   textStyle: const TextStyle(fontSize: 14),
                 ),
                 onPressed: () {
@@ -159,24 +182,25 @@ class _CharactersTabState extends State<CharactersTab> {
               ),
             ),
             ..._alphabet.map((letter) {
-              // _alphabet contient déjà des majuscules
+              final bool isSelected = _selectedLetter == letter;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2.0),
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _selectedLetter == letter
+                    backgroundColor: isSelected
                         ? Theme.of(context).colorScheme.primaryContainer
-                        : null,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
+                        : Theme.of(context).elevatedButtonTheme.style?.backgroundColor?.resolve({}),
+                    foregroundColor: isSelected
+                        ? Theme.of(context).colorScheme.onPrimaryContainer
+                        : Theme.of(context).elevatedButtonTheme.style?.foregroundColor?.resolve({}),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     minimumSize: const Size(30, 30),
                     textStyle: const TextStyle(fontSize: 14),
+                    // elevation: isSelected ? 4 : 1, // Optionnel: pour un effet visuel
                   ),
                   onPressed: () {
                     setState(() {
-                      _selectedLetter = letter; // letter est déjà une majuscule
+                      _selectedLetter = letter;
                     });
                   },
                   child: Text(letter),

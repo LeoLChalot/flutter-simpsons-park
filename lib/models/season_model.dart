@@ -1,14 +1,17 @@
+// lib/models/season_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Season {
   final String id;
+  final String name;
   final int seasonNumber;
-  final int episodeCount;
+  final int episodesCount;
 
   Season({
     required this.id,
+    required this.name,
     required this.seasonNumber,
-    required this.episodeCount,
+    required this.episodesCount,
   });
 
   factory Season.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -19,8 +22,9 @@ class Season {
 
     return Season(
       id: doc.id,
-      seasonNumber: data['seasonNumber'] as int? ?? 0,
-      episodeCount: data['episodeCount'] as int? ?? 0,
+      name: data['name'] as String? ?? 'Saison Inconnue', // Champ "name" de ta capture
+      seasonNumber: data['seasonNumber'] as int? ?? 0,   // Si tu as aussi un champ "seasonNumber" pour le tri
+      episodesCount: data['episodesCount'] as int? ?? 0,
     );
   }
 }

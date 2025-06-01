@@ -2,61 +2,55 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Character {
   final String id;
-  final String firstName;
-  final String lastName;
+  final String name;
   final String pseudo;
   final String imageUrl;
-  final String history;
-  final List<String> searchInitials;
+  final String description;
+  final String function;
 
   Character({
     required this.id,
-    required this.firstName,
-    required this.lastName,
+    required this.name,
     required this.pseudo,
     required this.imageUrl,
-    required this.history,
-    required this.searchInitials,
+    required this.description,
+    required this.function,
   });
 
   factory Character.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return Character(
       id: doc.id,
-      firstName: data['firstName'] as String? ?? '',
-      lastName: data['lastName'] as String? ?? '',
+      name: data['name'] as String? ?? '',
       pseudo: data['pseudo'] as String? ?? '',
       imageUrl: data['imageUrl'] as String? ?? '',
-      history: data['history'] as String? ?? '',
-      searchInitials: List<String>.from(data['searchInitials'] as List<dynamic>? ?? []),
+      description: data['description'] as String? ?? '',
+      function: data['function'] as String? ?? '',
     );
   }
 
   factory Character.fromJson(Map<String, dynamic> json) {
     return Character(
       id: json['id'] as String? ?? '',
-      firstName: json['firstName'] as String? ?? '',
-      lastName: json['lastName'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       pseudo: json['pseudo'] as String? ?? '',
       imageUrl: json['imageUrl'] as String? ?? '',
-      history: json['history'] as String? ?? '',
-      searchInitials: List<String>.from(json['searchInitials'] as List<dynamic>? ?? []),
+      description: json['description'] as String? ?? '',
+      function: json['function'] as String? ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
     List<String> initials = [];
-    if (firstName.isNotEmpty) initials.add(firstName[0].toUpperCase());
-    if (lastName.isNotEmpty) initials.add(lastName[0].toUpperCase());
+    if (name.isNotEmpty) initials.add(name[0].toUpperCase());
     if (pseudo.isNotEmpty) initials.add(pseudo[0].toUpperCase());
     initials = initials.toSet().toList();
     return {
-      'firstName': firstName,
-      'lastName': lastName,
+      'name': name,
       'pseudo': pseudo,
       'imageUrl': imageUrl,
-      'history': history,
-      'searchInitials': initials.isNotEmpty ? initials : null,
+      'description': description,
+      'function': function,
     };
   }
 }

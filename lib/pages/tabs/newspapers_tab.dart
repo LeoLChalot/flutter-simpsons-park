@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/newspaper_model.dart';
-import '../newspaper_detail_page.dart';
+import 'package:simpsons_park/models/newspaper_model.dart';
+import 'package:simpsons_park/pages/newspaper_detail_page.dart';
 
 class NewspapersTab extends StatefulWidget {
   const NewspapersTab({super.key});

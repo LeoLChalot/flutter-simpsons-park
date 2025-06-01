@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:simpsons_park/models/season_model.dart';
 import 'package:simpsons_park/models/episode_model.dart';
-import 'episode_detail_page.dart';
+import 'package:simpsons_park/pages/episode_detail_page.dart';
 
 class SeasonsTab extends StatefulWidget {
   const SeasonsTab({super.key});
@@ -14,7 +14,7 @@ class SeasonsTab extends StatefulWidget {
 
 class _SeasonsTabState extends State<SeasonsTab> {
   Stream<QuerySnapshot<Map<String, dynamic>>> _buildSeasonsQuery() {
-    return FirebaseFirestore.instance.collection('seasons').snapshots();
+    return FirebaseFirestore.instance.collection('seasons').orderBy("seasonNumber").snapshots();
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _buildEpisodesQuery(
@@ -79,7 +79,12 @@ class _SeasonsTabState extends State<SeasonsTab> {
                       "Error creating Season from Firestore doc ${doc.id}: $e",
                     );
                   }
-                  return Season(id: doc.id, seasonNumber: 0, episodeCount: 0);
+                  return Season(
+                    id: doc.id,
+                    seasonNumber: 0,
+                    episodesCount: 0,
+                    name: '',
+                  );
                 }
               },
             ).toList(); // On applique .toList() à seasonSnapshot.data!.docs.map
@@ -90,7 +95,7 @@ class _SeasonsTabState extends State<SeasonsTab> {
                 final Season season = seasons[index];
                 final seasonId = season.id;
                 final title =
-                    'Saison ${season.seasonNumber} - ${season.episodeCount} épisodes';
+                    'Saison ${season.seasonNumber} - ${season.episodesCount} épisodes';
 
                 return ExpansionTile(
                   key: PageStorageKey<String>(seasonId),
@@ -149,11 +154,16 @@ class _SeasonsTabState extends State<SeasonsTab> {
 
                             // Finalité : Données chargées
                             return Column(
-                              children: episodeSnapshot.data!.docs.map<Widget>((episodeDoc) {
+                              children: episodeSnapshot.data!.docs.map<Widget>((
+                                episodeDoc,
+                              ) {
                                 final Episode episode = Episode.fromFirestore(
                                   episodeDoc,
                                 );
-                                return ListItemEpisode(episode: episode);
+                                return ListItemEpisode(
+                                  episode: episode,
+                                  seasonNumber: season.seasonNumber,
+                                );
                               }).toList(),
                             );
                           },
@@ -172,10 +182,16 @@ final _contentPadding = const EdgeInsets.symmetric(
   horizontal: 32.0,
   vertical: 8.0,
 );
+
 class ListItemEpisode extends StatelessWidget {
   final Episode episode;
+  final int seasonNumber;
 
-  const ListItemEpisode({super.key, required this.episode});
+  const ListItemEpisode({
+    super.key,
+    required this.episode,
+    required this.seasonNumber,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -212,11 +228,11 @@ class ListItemEpisode extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EpisodeDetailPage(episode: episode),
+            builder: (context) =>
+                EpisodeDetailPage(episode: episode, seasonNumber: seasonNumber),
           ),
         );
       },
     );
-    ;
   }
 }
