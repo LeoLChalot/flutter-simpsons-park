@@ -10,10 +10,8 @@ import 'package:simpsons_park/pages/admin/add_episode_page.dart';
 import 'package:simpsons_park/pages/admin/add_newspaper_page.dart';
 import 'package:simpsons_park/pages/loading_page.dart';
 import 'package:simpsons_park/utils/auth_protected_logic.dart';
-import 'package:simpsons_park/utils/auth_wrapper.dart';
 import 'package:simpsons_park/utils/routes.dart';
 import 'package:simpsons_park/utils/simpsons_color_scheme.dart';
-import 'package:simpsons_park/apps/app_dashboard.dart';
 import 'package:simpsons_park/firebase_options.dart';
 
 void main() async {

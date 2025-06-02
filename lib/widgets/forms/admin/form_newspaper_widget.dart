@@ -1,10 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:simpsons_park/services/auth_service.dart';
+import 'package:simpsons_park/services/auth_service.dart'; // Assurez-vous que c'est le bon chemin
 
-import '../../../utils/routes.dart';
+import '../../../utils/routes.dart'; // Assurez-vous que c'est le bon chemin
 
 class FormNewspaperWidget extends StatefulWidget {
   const FormNewspaperWidget({super.key});
@@ -19,7 +18,10 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
   final _subtitleController = TextEditingController();
   final _bodyController = TextEditingController();
 
-  bool _signWithEmail = false;
+  // Cette variable sera initialisée par le FutureBuilder
+  String _userDisplayNameFromAttributes = ''; // Pour stocker le nom d'affichage récupéré
+
+  bool _signArticle = false; // Renommé de _signWithEmail pour plus de clarté
   bool _isLoading = false;
 
   @override
@@ -43,19 +45,23 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
       _isLoading = true;
     });
 
-    String? authorEmailValue;
-    if (_signWithEmail &&
+    String? authorDisplayNameValue; // Utilisera le nom d'affichage
+    if (_signArticle &&
         authService.isAuthenticated &&
-        authService.userEmail != null) {
-      authorEmailValue = authService.userEmail;
+        _userDisplayNameFromAttributes.isNotEmpty) { // Vérifier si le nom d'affichage est disponible
+      authorDisplayNameValue = _userDisplayNameFromAttributes;
     }
 
     Map<String, dynamic> newspaperData = {
       'title': _titleController.text.trim(),
       'subtitle': _subtitleController.text.trim(),
       'body': _bodyController.text.trim(),
-      'authorEmail': authorEmailValue,
+      // Utiliser un nom de champ plus approprié comme 'authorDisplayName' ou 'authorName'
+      'authorDisplayName': authorDisplayNameValue,
       'createdAt': Timestamp.now(),
+      // Vous pourriez aussi vouloir stocker l'UID de l'utilisateur pour référence,
+      // même si vous affichez le displayName.
+      // 'authorUid': authService.isAuthenticated ? authService.currentUser?.uid : null,
     };
 
     try {
@@ -78,7 +84,7 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
         _subtitleController.clear();
         _bodyController.clear();
         setState(() {
-          _signWithEmail = false;
+          _signArticle = false; // Réinitialiser la case à cocher
         });
       }
     } catch (e) {
@@ -102,25 +108,24 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+
+    // Gérer l'état de chargement initial d'AuthService
     if (authService.isLoading && !authService.isAuthenticated) {
-      // Afficher un indicateur de chargement si AuthService est en train de charger l'état initial
-      // et que l'utilisateur n'est pas encore authentifié.
       return const Center(child: CircularProgressIndicator());
     }
-    if (!authService.isAuthenticated || authService.cognitoUser == null) {
-      // Si l'utilisateur n'est pas authentifié, afficher un message ou rediriger.
-      // Normalement, AuthWrapper devrait empêcher d'arriver ici si non authentifié.
+
+    // Gérer le cas où l'utilisateur n'est pas authentifié
+    if (!authService.isAuthenticated || authService.cognitoUser == null) { // ou authService.currentUser == null si vous utilisez Firebase Auth directement
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Veuillez vous connecter pour accéder aux formulaires.'),
+            const Text('Veuillez vous connecter pour ajouter un article.'),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil(Routes.accessForm, (route) => false);
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil(Routes.accessForm, (route) => false); // Assurez-vous que Routes.accessForm est correct
               },
               child: const Text('Se connecter'),
             ),
@@ -128,35 +133,33 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
         ),
       );
     }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return FutureBuilder<Map<String, dynamic>?>(
-      future: authService.getUserAttributes(),
+      future: authService.getUserAttributes(), // Méthode pour obtenir les attributs utilisateur
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
           return Center(
-            child: Text('Erreur de chargement du profil : ${snapshot.error}'),
+            child: Text('Erreur de chargement du profil utilisateur : ${snapshot.error}'),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const Center(
+            child: Text('Impossible de récupérer les informations utilisateur.'),
           );
         }
 
-        final userAttributes = snapshot.data ?? {};
-        final userEmail = userAttributes.containsKey('email')
-            ? userAttributes['email'].toString()
-            : 'Non fourni';
-        DateTime? lastSignInTime;
-        if (userAttributes['updated_at'] != null) {
-          try {
-            lastSignInTime = DateTime.fromMillisecondsSinceEpoch((int.tryParse(userAttributes['updated_at'].toString()) ?? 0) * 1000);
-          } catch (e) {
-            if (kDebugMode) {
-              print("Error parsing updated_at: $e");
-            }
-          }
-        }
+        final userAttributes = snapshot.data!;
+        // Assigner le nom d'affichage à notre variable d'état
+        // Assurez-vous que 'name' est la bonne clé pour le displayName dans vos attributs utilisateur
+        _userDisplayNameFromAttributes = userAttributes['name'] ?? 'Auteur inconnu';
+        // final userEmail = userAttributes['email']?.toString() ?? 'Non fourni'; // Si vous en avez encore besoin ailleurs
+
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -215,38 +218,34 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
                 ),
                 const SizedBox(height: 16),
 
-                if (authService.isAuthenticated)
+                // La case à cocher ne s'affiche que si l'utilisateur est authentifié (déjà géré en amont)
+                // et si le nom d'affichage a pu être récupéré.
+                if (_userDisplayNameFromAttributes.isNotEmpty && _userDisplayNameFromAttributes != 'Auteur inconnu')
                   CheckboxListTile(
                     title: Text(
-                      // Utiliser authService.userEmail
-                      'Signer cet article ($userEmail)',
+                      'Signer cet article en tant que "$_userDisplayNameFromAttributes"',
                     ),
-                    value: _signWithEmail,
-                    onChanged:
-                    _isLoading // Désactiver si en cours de chargement pour éviter des états incohérents
+                    value: _signArticle,
+                    onChanged: _isLoading
                         ? null
                         : (bool? newValue) {
                       setState(() {
-                        _signWithEmail = newValue ?? false;
+                        _signArticle = newValue ?? false;
                       });
                     },
                     controlAffinity: ListTileControlAffinity.leading,
                     activeColor: colorScheme.primary,
                   )
-                else if (!authService.isAuthenticated && !authService.isLoading)
+                else if (authService.isAuthenticated) // Si authentifié mais displayName non dispo
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Text(
-                      'Vous devez être connecté pour pouvoir signer l\'article.',
+                      'Impossible de récupérer votre nom d\'affichage pour signer l\'article.',
                       style: TextStyle(color: theme.hintColor),
                       textAlign: TextAlign.center,
                     ),
-                  )
-                else if (authService.isLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    ),
+                  ),
+                // Pas besoin de gérer les cas !authService.isAuthenticated ici, car le widget entier est remplacé.
 
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
@@ -277,7 +276,5 @@ class _FormNewspaperWidgetState extends State<FormNewspaperWidget> {
         );
       },
     );
-
-
   }
 }

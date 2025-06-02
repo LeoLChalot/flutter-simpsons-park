@@ -1,29 +1,24 @@
 import 'dart:io';
-import 'dart:async'; // Pour StreamTransformer
-import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// import 'package:firebase_auth/firebase_auth.dart'; // Supposons que vous utilisez Cognito AuthService
-import 'package:provider/provider.dart'; // Si vous utilisez AuthService via Provider
-import 'package:simpsons_park/services/auth_service.dart'; // Votre AuthService pour Cognito
+import 'package:provider/provider.dart';
+import 'package:simpsons_park/services/auth_service.dart';
 import 'package:simpsons_park/models/character_model.dart';
 
-// Imports pour AWS S3 Upload
-import 'package:minio_new/io.dart';
 import 'package:minio_new/minio.dart';
-import 'package:minio_new/models.dart';
 import 'package:path/path.dart' as p;
-import 'package:uuid/uuid.dart'; // Pour générer des noms de fichiers uniques
-// import 'package:path/path.dart' as p; // Si nécessaire pour manipuler les chemins
+import 'package:uuid/uuid.dart';
 
-// **CONFIGURATION S3 - À GÉRER PLUS PROPREMENT DANS UNE VRAIE APP (par ex. via un service ou variables d'environnement)**
-const String _s3_bucket_name = 'simpsons-park-images'; // Remplacez
-const String _aws_region = 'eu-west-3'; // Ex: 'us-east-1', 'eu-west-1'
-const String _cognito_identity_pool_id ='eu-west-3:9aa4ef32-32ee-43f9-8018-be4b92cd2fee'; // Ex: 'us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
-const String _s3_sub_folder = 'character_images'; // Optionnel: pour stocker les images dans un sous-dossier
+import '../../../pages/character_detail_page.dart';
+
+const String _s3BucketName = 'simpsons-park-images';
+const String _awsRegion = 'eu-west-3';
+const String _cognitoIdentityPoolId =
+    'eu-west-3:9aa4ef32-32ee-43f9-8018-be4b92cd2fee';
 
 class FormCharacterWidget extends StatefulWidget {
   const FormCharacterWidget({super.key});
@@ -53,7 +48,6 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
   }
 
   Future<void> _pickImage() async {
-    // ... (votre code _pickImage reste le même)
     final ImagePicker picker = ImagePicker();
     try {
       final XFile? pickedFile = await picker.pickImage(
@@ -62,8 +56,7 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
       if (pickedFile != null) {
         setState(() {
           _imageFile = File(pickedFile.path);
-          _uploadError =
-              null; // Réinitialiser l'erreur si une nouvelle image est sélectionnée
+          _uploadError = null;
         });
       }
     } catch (e) {
@@ -80,6 +73,7 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
     }
   }
 
+  // Non implémentée pour ne pas bloquer l'upload d'image
   Future<String?> _uploadImageToS3(File imageFile, String idToken) async {
     if (_imageFile == null) return null;
     setState(() => _isLoading = true);
@@ -89,13 +83,14 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
         ? p.extension(imageFile.path).substring(1)
         : 'jpg';
     final String fileName = '${const Uuid().v4()}.$fileExtension';
-    final String s3ObjectPath = _s3_sub_folder.isNotEmpty
-        ? '$_s3_sub_folder/$fileName'
+    final String s3ObjectPath = _s3BucketName.isNotEmpty
+        ? '$_s3BucketName/$fileName'
         : fileName;
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      if (!authService.isAuthenticated || authService.session?.idToken.jwtToken == null) {
+      if (!authService.isAuthenticated ||
+          authService.session?.idToken.jwtToken == null) {
         _uploadError = "Utilisateur non authentifié ou session invalide.";
         if (mounted) setState(() => _isLoading = false);
         return null;
@@ -104,7 +99,7 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
 
       // Obtenir les credentials AWS temporaires via Cognito Identity Pool
       final tempCredentials = await authService.getAwsCredentialsFromCognito(
-        _cognito_identity_pool_id
+        _cognitoIdentityPoolId,
       );
 
       if (tempCredentials == null) {
@@ -117,29 +112,29 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
       // DEBUG: AFFICHER LES DETAILS DES CREDENTIALS (À ENLEVER EN PRODUCTION)
       if (kDebugMode) {
         print('S3 Upload - Access Key: ${tempCredentials.accessKeyId}');
-        // print('S3 Upload - Secret Key: ${tempCredentials.secretAccessKey}'); // Attention avec ceci
-        // print('S3 Upload - Session Token: ${tempCredentials.sessionToken}'); // Attention avec ceci
         print('S3 Upload - Expiration: ${tempCredentials.expiration}');
       }
 
       // Initialiser le client Minio/S3
-      // C'EST LA PARTIE CRUCIALE POUR L'ERREUR ACTUELLE
       final minio = Minio(
-        endPoint: 's3.eu-west-3.amazonaws.com', // Endpoint S3 spécifique à VOTRE région de bucket
-        region: 'eu-west-3',                 // VOTRE région S3 (doit correspondre à l'endpoint)
+        endPoint: 's3.eu-west-3.amazonaws.com',
+        // Endpoint S3 spécifique à VOTRE région de bucket
+        region: 'eu-west-3',
         accessKey: tempCredentials.accessKeyId,
         secretKey: tempCredentials.secretAccessKey,
         sessionToken: tempCredentials.sessionToken,
       );
 
       if (kDebugMode) {
-        print('Minio Client configuré avec Endpoint: ${minio.endPoint}, Region: ${minio.region}');
+        print(
+          'Minio Client configuré avec Endpoint: ${minio.endPoint}, Region: ${minio.region}',
+        );
       }
 
       // Uploader le fichier
       await minio.putObject(
-        _s3_bucket_name, // Nom de votre bucket S3
-        s3ObjectPath,    // Nom/chemin de l'objet dans le bucket
+        _s3BucketName,
+        s3ObjectPath,
         imageFile.openRead().transform<Uint8List>(
           StreamTransformer.fromHandlers(
             handleData: (data, sink) {
@@ -147,16 +142,10 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
             },
           ),
         ),
-        // contentType: 'image/$fileExtension', // Optionnel, mais recommandé
       );
 
-      // Construire l'URL de l'image uploadéeToo many positional arguments: 3 expected, but 4 found. (Documentation)
-      //
-      // Try removing the extra positional arguments, or specifying the name for named arguments.
-      // Le format standard est https://<bucket-name>.s3.<region>.amazonaws.com/<object-key>
-      // Ou si vous avez un nom de domaine personnalisé / CloudFront devant.
       final String imageUrl =
-          'https://$_s3_bucket_name.s3.$_aws_region.amazonaws.com/$s3ObjectPath';
+          'https://$_s3BucketName.s3.$_awsRegion.amazonaws.com/$s3ObjectPath';
       if (kDebugMode) {
         print('Image uploadée avec succès sur S3. URL: $imageUrl');
       }
@@ -182,6 +171,45 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  String slugify(String text) {
+    if (text.isEmpty) {
+      return "";
+    }
+    String result = text.toLowerCase();
+    result = result
+        .replaceAll('á', 'a')
+        .replaceAll('à', 'a')
+        .replaceAll('â', 'a')
+        .replaceAll('ä', 'a');
+    result = result
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('ë', 'e');
+    result = result
+        .replaceAll('í', 'i')
+        .replaceAll('ì', 'i')
+        .replaceAll('î', 'i')
+        .replaceAll('ï', 'i');
+    result = result
+        .replaceAll('ó', 'o')
+        .replaceAll('ò', 'o')
+        .replaceAll('ô', 'o')
+        .replaceAll('ö', 'o');
+    result = result
+        .replaceAll('ú', 'u')
+        .replaceAll('ù', 'u')
+        .replaceAll('û', 'u')
+        .replaceAll('ü', 'u');
+    result = result.replaceAll('ç', 'c');
+    result = result.replaceAll('ñ', 'n');
+    result = result.replaceAll(RegExp(r'\s+'), '-');
+    result = result.replaceAll(RegExp(r'[^a-z0-9-]'), '');
+    result = result.replaceAll(RegExp(r'^-+|-+$'), '');
+    result = result.replaceAll(RegExp(r'-+'), '-');
+    return result;
   }
 
   Future<void> _submitForm() async {
@@ -211,33 +239,71 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
         setState(() => _isLoading = false);
         return;
       }
-      final String idToken = authService.session!.idToken.jwtToken!;
+      // final String idToken = authService.session!.idToken.jwtToken!;
 
-      imageUrl = await _uploadImageToS3(_imageFile!, idToken);
-      if (imageUrl == null) {
-        // L'erreur est déjà gérée et affichée par _uploadImageToS3
-        setState(() => _isLoading = false);
-        return; // Arrêter si l'upload a échoué
-      }
+      // imageUrl = await _uploadImageToS3(_imageFile!, idToken);
+      // if (imageUrl == null) {
+      // L'erreur est déjà gérée et affichée par _uploadImageToS3
+      // setState(() => _isLoading = false);
+      // return; // Arrêter si l'upload a échoué
+      // }
     } else {
-      imageUrl = ''; // Pas d'image, URL vide ou null
+      imageUrl = '';
+    }
+
+    final String characterName = _nameController.text.trim();
+    final String characterId = slugify(
+      characterName,
+    ); // Utiliser le nom slugifié comme ID
+
+    if (characterId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Le nom du personnage ne peut pas être vide ou contenir uniquement des caractères spéciaux.',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      setState(() => _isLoading = false);
+      return;
     }
 
     Character tempCharacter = Character(
-      id: '',
-      // Firestore générera l'ID
-      name: _nameController.text.trim(),
+      id: characterId,
+      name: characterName,
       pseudo: _pseudoController.text.trim(),
       description: _descriptionController.text.trim(),
       function: _functionController.text.trim(),
-      imageUrl: imageUrl, // Utiliser l'URL S3
+      imageUrl: imageUrl?.trim() ?? '',
     );
     Map<String, dynamic> characterData = tempCharacter.toJson();
 
     try {
-      await FirebaseFirestore.instance
+      final characterDocRef = FirebaseFirestore.instance
           .collection('characters')
-          .add(characterData);
+          .doc(characterId);
+
+      // Vérifier si un personnage avec cet ID existe déjà
+      final docSnapshot = await characterDocRef.get();
+      if (docSnapshot.exists) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Un personnage avec le nom "$characterName" (ID: $characterId) existe déjà.',
+              ),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      await characterDocRef.set(characterData);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -246,6 +312,8 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // Réinitialiser le formulaire
         _formKey.currentState!.reset();
         _nameController.clear();
         _pseudoController.clear();
@@ -254,6 +322,25 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
         setState(() {
           _imageFile = null;
         });
+
+        final Character characterForNavigation = tempCharacter;
+
+        await Future.delayed(Duration(milliseconds: 300));
+
+        // Si la page actuelle est un dialogue ou une modale que vous voulez fermer avant de naviguer :
+        if(!mounted) return;
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+
+        // Naviguer vers la page de détail
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                CharacterDetailPage(character: characterForNavigation),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -273,15 +360,6 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
 
   @override
   Widget build(BuildContext context) {
-
-    // if (_uploadError != null && !_isLoading)
-    //   Padding(
-    //     padding: const EdgeInsets.only(top: 8.0),
-    //     child: Text(_uploadError!, style: TextStyle(color: Colors.red)),
-    //   ),
-
-    // Le reste de votre méthode build reste largement le même.
-    // Adaptez simplement l'affichage de l'état de chargement et des erreurs.
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -307,12 +385,15 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
               decoration: InputDecoration(
                 labelText: "Nom du personnage",
                 hintText: "Ex: Homer Simpson",
-                prefixIcon: Icon(Icons.person_outline, color: colorScheme.primary),
+                prefixIcon: Icon(
+                  Icons.person_outline,
+                  color: colorScheme.primary,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -330,12 +411,15 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
               decoration: InputDecoration(
                 labelText: "Pseudo (optionnel)",
                 hintText: "Ex: Homie",
-                prefixIcon: Icon(Icons.face_retouching_natural_outlined, color: colorScheme.primary),
+                prefixIcon: Icon(
+                  Icons.face_retouching_natural_outlined,
+                  color: colorScheme.primary,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(),
               ),
               textInputAction: TextInputAction.next,
               // Pas de validateur si c'est optionnel, ou un validateur spécifique si besoin
@@ -348,12 +432,15 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
               decoration: InputDecoration(
                 labelText: "Fonction / Rôle",
                 hintText: "Ex: Inspecteur de la sécurité",
-                prefixIcon: Icon(Icons.work_outline, color: colorScheme.primary),
+                prefixIcon: Icon(
+                  Icons.work_outline,
+                  color: colorScheme.primary,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -371,14 +458,17 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
               decoration: InputDecoration(
                 labelText: "Description",
                 hintText: "Décrivez le personnage...",
-                prefixIcon: Icon(Icons.description_outlined, color: colorScheme.primary),
+                prefixIcon: Icon(
+                  Icons.description_outlined,
+                  color: colorScheme.primary,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 filled: true,
-                fillColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(),
               ),
-              maxLines: 3, // Permet plusieurs lignes pour la description
+              maxLines: 3,
               keyboardType: TextInputType.multiline,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -386,63 +476,71 @@ class _FormCharacterWidgetState extends State<FormCharacterWidget> {
                 }
                 return null;
               },
-              textInputAction: TextInputAction.done, // Ou TextInputAction.newline si vous voulez une nouvelle ligne facile
+              textInputAction: TextInputAction.done,
             ),
-            const SizedBox(height: 24), // Augmenté un peu l'espace avant l'image
+            const SizedBox(height: 24),
 
-            // Sélection d'image améliorée
+            // Augmenté un peu l'espace avant l'image
             Text(
               'Image du personnage :',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold), // Un peu plus de poids
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ), // Un peu plus de poids
             ),
             const SizedBox(height: 12),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center, // Aligner verticalement
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  flex: 2, // Donner plus d'espace à l'image
-                  child: AspectRatio( // Pour maintenir un ratio pour le placeholder
-                    aspectRatio: 1.0, // Carré, ajustez si besoin
+                  flex: 2,
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: _imageFile == null ? colorScheme.surfaceVariant.withOpacity(0.5) : Colors.transparent,
+                        color: _imageFile == null
+                            ? colorScheme.surfaceContainerHighest.withValues()
+                            : Colors.transparent,
                         border: Border.all(
-                          color: _imageFile == null ? colorScheme.outline.withOpacity(0.5) : colorScheme.primary,
+                          color: _imageFile == null
+                              ? colorScheme.outline.withValues()
+                              : colorScheme.primary,
                           width: _imageFile == null ? 1 : 2,
                         ),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: _imageFile == null
                           ? Center(
-                        child: Icon(
-                          Icons.image_search_outlined,
-                          size: 50,
-                          color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                        ),
-                      )
+                              child: Icon(
+                                Icons.image_search_outlined,
+                                size: 50,
+                                color: colorScheme.onSurfaceVariant
+                                    .withValues(),
+                              ),
+                            )
                           : ClipRRect(
-                        borderRadius: BorderRadius.circular(11.0), // légèrement moins pour éviter le débordement du border
-                        child: Image.file(
-                          _imageFile!,
-                          fit: BoxFit.cover, // Assure que l'image remplit l'espace
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
-                      ),
+                              borderRadius: BorderRadius.circular(11.0),
+                              child: Image.file(
+                                _imageFile!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                            ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 16),
-                Expanded( // Pour que le bouton puisse prendre de la place et être centré si on veut
+                Expanded(
                   flex: 1,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.photo_library_outlined),
                     label: const Text('Choisir'),
                     onPressed: _isLoading ? null : _pickImage,
                     style: ElevatedButton.styleFrom(
-                      // backgroundColor: colorScheme.primary, // Si vous voulez une couleur spécifique
-                      // foregroundColor: colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
                       textStyle: theme.textTheme.labelLarge,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),

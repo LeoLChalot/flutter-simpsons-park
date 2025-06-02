@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:amazon_cognito_identity_dart_2/cognito.dart';
 import 'package:flutter/foundation.dart';
@@ -22,7 +21,7 @@ class AwsTemporaryCredentials {
   });
 }
 
-// Remplacez par vos détails réels Cognito User Pool
+// Cognito User Pool
 const String _awsUserPoolId =
     'eu-west-3_u13dOolt7'; // Ex: 'eu-west-3_xxxxxxxxx'
 const String _awsClientId =
@@ -57,6 +56,7 @@ class AuthService with ChangeNotifier {
   String? get userEmail {
     return _cognitoUser?.username;
   }
+
 
   AuthService() {
     _userPool = CognitoUserPool(_awsUserPoolId, _awsClientId);
@@ -298,7 +298,6 @@ class AuthService with ChangeNotifier {
       if (kDebugMode) {
         print("AuthService: Cognito New Password Required: $e");
       }
-      // Gérer la navigation vers un écran de changement de mot de passe obligatoire
     } on CognitoUserConfirmationNecessaryException catch (e) {
       _errorMessage =
           "Veuillez confirmer votre compte avant de vous connecter.";
@@ -327,7 +326,7 @@ class AuthService with ChangeNotifier {
     _setLoading(false);
     _session = null;
     _cognitoUser = null;
-    notifyListeners(); // Notify to show error and update state
+    notifyListeners();
     return false;
   }
 
@@ -452,7 +451,7 @@ class AuthService with ChangeNotifier {
     String email,
     String confirmationCode,
     String newPassword,
-  ) async {
+  ) async  {
     _setLoading(true);
     _clearError();
     final tempUser = CognitoUser(email, _userPool);
@@ -489,8 +488,6 @@ class AuthService with ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    // Le SDK s'attend à ce que _session (qui est liée à _cognitoUser,
-    // qui est lui-même lié à _userPool) soit valide et contienne l'ID Token.
     if (!isAuthenticated || _session!.idToken.jwtToken == null) {
       _errorMessage =
           "AuthService: Session utilisateur invalide ou ID Token manquant.";
@@ -499,22 +496,12 @@ class AuthService with ChangeNotifier {
       return null;
     }
 
-    // Initialisation standard de CognitoCredentials.
-    // Le SDK utilisera la session active du _userPool (via _cognitoUser.getSession())
-    // pour obtenir l'ID token requis pour l'échange avec l'Identity Pool.
     final credentials = CognitoCredentials(
       cognitoIdentityPoolId,
       _userPool, // Le CognitoUserPool où l'utilisateur est connecté
     );
 
-    // Il N'EST PAS nécessaire d'assigner manuellement credentials.logins.
-    // Le SDK gère la récupération du jeton ID depuis la session active de _userPool
-    // lorsque getAwsCredentials() est appelée.
-
     try {
-      // getAwsCredentials() va tenter d'obtenir les credentials.
-      // Si la session de _cognitoUser (liée à _userPool) est valide,
-      // l'ID token sera utilisé.
       await credentials.getAwsCredentials(
         _session!.idToken.jwtToken!,
       );
@@ -533,7 +520,6 @@ class AuthService with ChangeNotifier {
       if (kDebugMode) {
         print("AuthService: Credentials AWS obtenus avec succès.");
         print("Access Key ID: ${credentials.accessKeyId}");
-        // NE PAS logguer secretAccessKey ou sessionToken en production
       }
       _setLoading(false);
       return AwsTemporaryCredentials(
@@ -555,13 +541,61 @@ class AuthService with ChangeNotifier {
             "CognitoClientException details: ${e.message}, code: ${e.code}, name: ${e.name}",
           );
         }
-        // Des codes d'erreur spécifiques ici peuvent être très utiles
-        // e.g. 'NotAuthorizedException', 'ResourceNotFoundException'
       }
       _setLoading(false);
       return null;
     }
   }
+
+  Future<bool> deleteUserAccount() async {
+    if (!isAuthenticated || _cognitoUser == null) {
+      _errorMessage = "Utilisateur non authentifié ou session invalide pour supprimer le compte.";
+      if (kDebugMode) print("AuthService: Tentative de suppression de compte sans authentification.");
+      notifyListeners();
+      return false;
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    try {
+      // La méthode deleteUser() de la librairie amazon_cognito_identity_dart_2
+      // gère la suppression de l'utilisateur actuellement authentifié.
+      await _cognitoUser!.deleteUser();
+
+      if (kDebugMode) {
+        print("AuthService: Compte utilisateur supprimé avec succès de Cognito.");
+      }
+
+      // Après la suppression du compte, effectuer une déconnexion complète
+      // pour nettoyer l'état local.
+      _cognitoUser = null;
+      _session = null;
+      _isSignedUpUserConfirmed = false;
+      await _clearStoredTokens(); // Efface les tokens du stockage sécurisé
+
+      _setLoading(false); // Notifie les listeners après la suppression et le nettoyage
+      return true;
+
+    } on CognitoClientException catch (e) {
+      _errorMessage = e.message ?? "Erreur lors de la suppression du compte.";
+      if (kDebugMode) {
+        print("AuthService: Erreur Cognito lors de la suppression du compte: ${e.code} - ${e.message}");
+        // Exemples d'erreurs possibles:
+        // NotAuthorizedException si la session n'est plus valide
+        // InvalidParameterException, etc.
+      }
+    } catch (e) {
+      _errorMessage = "Erreur inattendue lors de la suppression du compte: ${e.toString()}";
+      if (kDebugMode) {
+        print("AuthService: Erreur inattendue lors de la suppression du compte: $e");
+      }
+    }
+
+    _setLoading(false); // Notifie en cas d'erreur
+    return false;
+  }
+
 
   void clearErrorMessage() {
     if (_errorMessage != null) {
@@ -570,3 +604,5 @@ class AuthService with ChangeNotifier {
     }
   }
 }
+
+

@@ -1,5 +1,4 @@
 // widgets/forms/form_register_widget.dart
-import 'package:amazon_cognito_identity_dart_2/src/cognito_user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:simpsons_park/services/auth_service.dart'; // Your AuthService
@@ -20,7 +19,7 @@ class FormRegisterWidget extends StatefulWidget {
 
 class _FormRegisterWidgetState extends State<FormRegisterWidget> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(); // For 'name' attribute
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -51,23 +50,21 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
             _emailController.text.trim(),
           );
         } else if (authService.isSignedUpUserConfirmed) {
-          // This case means the user was already confirmed (e.g., re-verified, or auto-confirmed by Cognito setting)
+          if(!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Registration successful! Please login."),
+              content: Text("Inscription réussie! Vous pouvez maintenant vous connecter."),
               backgroundColor: Colors.green,
             ),
           );
-          widget.onSwitchToLogin(); // Switch to login form
+          widget.onSwitchToLogin();
         }
-        // If !success, error message is already handled by listening to authService.errorMessage below
       } else if (mounted) {
-        // This 'else' implies signUp returned false
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               authService.errorMessage ??
-                  "Registration failed. Please try again.",
+                  "Inscription échouée, veuillez réessayer.",
             ),
             backgroundColor: Colors.red,
           ),
@@ -89,7 +86,7 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Text(
-              'Register',
+              'Inscription',
               style: Theme.of(context).textTheme.headlineMedium,
               textAlign: TextAlign.center,
             ),
@@ -97,12 +94,12 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'Full Name',
+                labelText: 'Votre nom',
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your name';
+                  return 'Saisissez votre nom';
                 }
                 return null;
               },
@@ -117,7 +114,7 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.isEmpty || !value.contains('@')) {
-                  return 'Please enter a valid email';
+                  return 'Saisissez une adresse e-mail valide';
                 }
                 return null;
               },
@@ -131,8 +128,8 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
               ),
               obscureText: true,
               validator: (value) {
-                if (value == null || value.isEmpty || value.length < 6) {
-                  return 'Password must be at least 6 characters';
+                if (value == null || value.isEmpty || value.length < 8) {
+                  return 'Le mot de passe doit contenir au moins 8 caractères';
                 }
                 return null;
               },
@@ -141,26 +138,25 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
             TextFormField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
-                labelText: 'Confirm Password',
+                labelText: 'Confirmation du mot de passe',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
+                  return 'Veuillez confirmer votre mot de passe';
                 }
                 if (value != _passwordController.text) {
-                  return 'Passwords do not match';
+                  return 'Les mots de passe ne correspondent pas';
                 }
                 return null;
               },
             ),
             const SizedBox(height: 12),
-            // Display error message from AuthService if any
             if (authService.errorMessage != null &&
                 !authService.isLoading &&
                 authService.cognitoUser ==
-                    null /* Only show general errors here */ )
+                    null )
               Padding(
                 padding: const EdgeInsets.only(bottom: 10.0),
                 child: Text(
@@ -176,13 +172,12 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 10.0),
                 child: Text(
-                  "Registration successful! Please check your email (${_emailController.text.trim()}) to confirm your account.",
+                  "Inscription réussie! Vous devez confirmer votre adresse e-mail (${_emailController.text.trim()}) avant de vous connecter.",
                   style: const TextStyle(color: Colors.orange, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
               ),
 
-            // Specific message for confirmation needed (if not navigating away)
             if (authService.errorMessage != null &&
                 authService.errorMessage!.contains('confirm your account'))
               Padding(
@@ -208,12 +203,12 @@ class _FormRegisterWidgetState extends State<FormRegisterWidget> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Register'),
+                  : const Text('Inscription'),
             ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: widget.onSwitchToLogin,
-              child: const Text('Already have an account? Login'),
+              child: const Text('Déjà inscrit ? Connexion'),
             ),
           ],
         ),

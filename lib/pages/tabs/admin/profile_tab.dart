@@ -19,7 +19,8 @@ class _ProfileTabState extends State<ProfileTab> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmNewPasswordController = TextEditingController();
 
-  bool _isLoadingDialog = false; // Pour le dialogue de changement de mot de passe
+  bool _isLoadingChangePasswordDialog = false; // Pour le dialogue de changement de mot de passe
+  bool _isLoadingDeleteAccountDialog = false; // Pour le dialogue de suppression de compte
 
   @override
   void dispose() {
@@ -34,13 +35,13 @@ class _ProfileTabState extends State<ProfileTab> {
     _oldPasswordController.clear();
     _newPasswordController.clear();
     _confirmNewPasswordController.clear();
+    authService.clearErrorMessage(); // Nettoyer les anciens messages d'erreur
     bool passwordChangedSuccessfully = false;
 
     await showDialog<void>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: !_isLoadingChangePasswordDialog, // Empêcher la fermeture pendant le chargement
       builder: (BuildContext dialogContext) {
-        // StatefulBuilder pour gérer l'état de chargement à l'intérieur du dialogue
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
@@ -76,7 +77,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         if (value == null || value.isEmpty) {
                           return 'Veuillez entrer un nouveau mot de passe.';
                         }
-                        if (value.length < 6) { // Conservez vos règles de complexité
+                        if (value.length < 6) {
                           return 'Le mot de passe doit comporter au moins 6 caractères.';
                         }
                         return null;
@@ -100,46 +101,54 @@ class _ProfileTabState extends State<ProfileTab> {
                         return null;
                       },
                     ),
-                    if (_isLoadingDialog) ...[
+                    if (_isLoadingChangePasswordDialog) ...[
                       const SizedBox(height: 16),
                       const CircularProgressIndicator(),
                     ],
-                    if (authService.errorMessage != null && !authService.isLoading)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(authService.errorMessage!, style: TextStyle(color: simpsonsTheme.colorScheme.error)),
-                      ),
+                    // Afficher le message d'erreur de AuthService DANS le dialogue
+                    Consumer<AuthService>( // Utiliser Consumer pour réagir aux changements d'errorMessage
+                        builder: (context, auth, child) {
+                          if (auth.errorMessage != null && !auth.isLoading) { // S'assurer que isLoading est celui d'AuthService
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(auth.errorMessage!, style: TextStyle(color: simpsonsTheme.colorScheme.error)),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }
+                    ),
                   ],
                 ),
               ),
               actions: <Widget>[
                 TextButton(
-                  onPressed: _isLoadingDialog ? null : () {
+                  onPressed: _isLoadingChangePasswordDialog ? null : () {
                     authService.clearErrorMessage();
                     Navigator.of(dialogContext).pop();
                   },
                   child: const Text('Annuler'),
                 ),
                 ElevatedButton(
-                  onPressed: _isLoadingDialog ? null : () async {
+                  onPressed: _isLoadingChangePasswordDialog ? null : () async {
                     if (_changePasswordFormKey.currentState!.validate()) {
-                      setStateDialog(() => _isLoadingDialog = true);
-                      authService.clearErrorMessage();
+                      setStateDialog(() => _isLoadingChangePasswordDialog = true);
+                      // authService.clearErrorMessage(); // Déjà fait en entrant dans le dialogue et en annulant
 
                       bool success = await authService.changePassword(
                         _oldPasswordController.text,
                         _newPasswordController.text,
                       );
-                      setStateDialog(() => _isLoadingDialog = false);
+                      // Pas besoin de reconstruire le dialogue pour le message d'erreur si Consumer est utilisé
+                      // Il se reconstruira si authService.errorMessage change
+                      // setStateDialog((){}); // Peut être redondant avec Consumer
 
                       if (success) {
                         passwordChangedSuccessfully = true;
                         if (!dialogContext.mounted) return;
-                        Navigator.of(dialogContext).pop();
-                      } else {
-                        // setStateDialog est nécessaire pour reconstruire le dialogue et montrer l'erreur
-                        setStateDialog((){});
+                        Navigator.of(dialogContext).pop(); // Fermer le dialogue en cas de succès
                       }
+                      // Si !success, le message d'erreur sera affiché par le Consumer
+                      setStateDialog(() => _isLoadingChangePasswordDialog = false); // Arrêter le chargement local du dialogue
                     }
                   },
                   child: const Text('Changer'),
@@ -154,27 +163,114 @@ class _ProfileTabState extends State<ProfileTab> {
     if (passwordChangedSuccessfully && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Mot de passe mis à jour avec succès ! Il peut être nécessaire de vous reconnecter.'),
+          content: Text('Mot de passe mis à jour avec succès !'),
           backgroundColor: Colors.green,
         ),
       );
-      // Avec Cognito, l'utilisateur n'est généralement PAS déconnecté
-      // automatiquement après un changement de mot de passe.
     }
   }
 
+  // --- LOGIQUE DE SUPPRESSION DE COMPTE ---
+  Future<void> _showDeleteAccountConfirmationDialog(BuildContext context, AuthService authService) async {
+    authService.clearErrorMessage();
+    bool accountDeletedSuccessfully = false;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: !_isLoadingDeleteAccountDialog, // Empêcher la fermeture pendant le chargement
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: const Text('Supprimer le compte ?'),
+            content: SingleChildScrollView( // Au cas où le message d'erreur est long
+              child: ListBody(
+                children: <Widget>[
+                  const Text('Êtes-vous sûr de vouloir supprimer votre compte ?'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Cette action est irréversible et toutes vos données associées à ce compte (profil, etc.) seront définitivement perdues.',
+                    style: TextStyle(color: simpsonsTheme.colorScheme.error),
+                  ),
+                  if (_isLoadingDeleteAccountDialog) ...[
+                    const SizedBox(height: 16),
+                    const Center(child: CircularProgressIndicator()),
+                  ],
+                  // Afficher le message d'erreur de AuthService DANS le dialogue
+                  Consumer<AuthService>(
+                      builder: (context, auth, child) {
+                        if (auth.errorMessage != null && !auth.isLoading) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(auth.errorMessage!, style: TextStyle(color: simpsonsTheme.colorScheme.error)),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      }
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: _isLoadingDeleteAccountDialog ? null : () {
+                  authService.clearErrorMessage();
+                  Navigator.of(dialogContext).pop(); // Ferme simplement le dialogue
+                },
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: simpsonsTheme.colorScheme.error,
+                  foregroundColor: simpsonsTheme.colorScheme.onError,
+                ),
+                onPressed: _isLoadingDeleteAccountDialog ? null : () async {
+                  setStateDialog(() => _isLoadingDeleteAccountDialog = true);
+                  // authService.clearErrorMessage(); // Déjà fait
+
+                  // Supposant que deleteUserAccount existe dans AuthService
+                  bool success = await authService.deleteUserAccount();
+
+                  if (success) {
+                    accountDeletedSuccessfully = true;
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop(); // Fermer le dialogue en cas de succès
+                  }
+                  // Si !success, le message d'erreur sera affiché par le Consumer
+                  setStateDialog(() => _isLoadingDeleteAccountDialog = false);
+                },
+                child: const Text('Supprimer Définitivement'),
+              ),
+            ],
+          );
+        });
+      },
+    );
+
+    if (accountDeletedSuccessfully && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Votre compte a été supprimé avec succès.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Déconnecter l'utilisateur et rediriger
+      // deleteUserAccount dans AuthService devrait idéalement gérer la session Cognito
+      // mais une déconnexion explicite ici est une bonne pratique de fallback.
+      await authService.signOut(); // Assurer la déconnexion
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(Routes.accessForm, (route) => false);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    // Écouter AuthService pour l'état d'authentification et les détails de l'utilisateur
     final authService = Provider.of<AuthService>(context);
+
     if (authService.isLoading && !authService.isAuthenticated) {
-      // Afficher un indicateur de chargement si AuthService est en train de charger l'état initial
-      // et que l'utilisateur n'est pas encore authentifié.
       return const Center(child: CircularProgressIndicator());
     }
     if (!authService.isAuthenticated || authService.cognitoUser == null) {
-      // Si l'utilisateur n'est pas authentifié, afficher un message ou rediriger.
-      // Normalement, AuthWrapper devrait empêcher d'arriver ici si non authentifié.
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -192,7 +288,6 @@ class _ProfileTabState extends State<ProfileTab> {
       );
     }
 
-    // L'utilisateur est authentifié, utiliser FutureBuilder pour obtenir les attributs
     return FutureBuilder<Map<String, dynamic>?>(
       future: authService.getUserAttributes(),
       builder: (context, snapshot) {
@@ -205,37 +300,18 @@ class _ProfileTabState extends State<ProfileTab> {
 
         final userAttributes = snapshot.data ?? {};
         final userEmail = userAttributes.containsKey('email') ? userAttributes['email'].toString() : 'Non fourni';
-        // Pour Cognito, le "displayName" est souvent l'attribut 'name'.
-        // L'UID est le 'sub' (subject) dans les jetons Cognito, ou le username.
         final displayName = userAttributes['name'] ?? '';
-        final uid = authService.cognitoUser!.username; // ou userAttributes['sub'] si vous préférez
+        final uid = authService.cognitoUser!.username;
 
-        // Pour les dates, Cognito les stocke généralement en tant que timestamps ou chaînes ISO.
-        // Vous devrez les parser. Voici des exemples de noms d'attributs communs :
-        // 'UserCreateDate', 'UserLastModifiedDate' ne sont pas des attributs standards
-        // directement disponibles de la même manière que Firebase.
-        // 'updated_at' est un attribut standard (timestamp Unix). 'email_verified', 'phone_number_verified'.
-        // Pour la date de création, vous pourriez avoir à la stocker comme attribut personnalisé lors de l'inscription.
-
-        // Placeholder pour la date de création et dernière connexion car Cognito ne les fournit pas
-        // aussi directement que Firebase. Vous devrez peut-être utiliser `updated_at` pour `UserLastModifiedDate`.
-        DateTime? creationTime;
-        DateTime? lastSignInTime; // Cognito ne trace pas le "last sign in" de la même manière.
-        // `auth_time` dans le jeton ID est l'heure d'authentification.
-
+        DateTime? lastSignInTime; // 'updated_at' est un proxy pour la dernière modification/activité
         if (userAttributes['updated_at'] != null) {
           try {
-            lastSignInTime = DateTime.fromMillisecondsSinceEpoch((int.tryParse(userAttributes['updated_at'].toString()) ?? 0) * 1000);
+            // Cognito 'updated_at' est en secondes epoch, pas millisecondes.
+            lastSignInTime = DateTime.fromMillisecondsSinceEpoch((int.parse(userAttributes['updated_at'].toString())) * 1000);
           } catch (e) {
-            if (kDebugMode) {
-              print("Error parsing updated_at: $e");
-            }
+            if (kDebugMode) { print("Error parsing updated_at: $e");}
           }
         }
-
-        // TODO GERER L'UTILISATION DE PHOTOS DE PROFIL
-        // final photoUrl = userAttributes['picture'] as String?;
-
 
         return Padding(
           padding: const EdgeInsets.all(16.0),
@@ -244,7 +320,7 @@ class _ProfileTabState extends State<ProfileTab> {
               Center(
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundImage: null,
+                  backgroundImage: null, // TODO: Gérer photoUrl si disponible
                   backgroundColor: simpsonsTheme.colorScheme.primaryContainer,
                   child: Icon(
                     Icons.person,
@@ -291,25 +367,15 @@ class _ProfileTabState extends State<ProfileTab> {
                       _buildUserInfoRow(
                         context: context,
                         icon: Icons.vpn_key_outlined,
-                        label: 'User ID (sub/username)', // Cognito utilise 'sub' comme identifiant unique ou le username
+                        label: 'User ID (sub/username)',
                         value: uid ?? 'Non fourni',
                       ),
-                      // Pour la date de création, vous devriez stocker cela comme un attribut personnalisé.
-                      // if (creationTime != null) ...[
-                      //   const Divider(height: 20),
-                      //   _buildUserInfoRow(
-                      //     context: context,
-                      //     icon: Icons.date_range_outlined,
-                      //     label: 'Compte créé le',
-                      //     value: MaterialLocalizations.of(context).formatMediumDate(creationTime),
-                      //   ),
-                      // ],
-                      if (lastSignInTime != null) ...[ // Utilisation de 'updated_at' comme proxy
+                      if (lastSignInTime != null) ...[
                         const Divider(height: 20),
                         _buildUserInfoRow(
                           context: context,
                           icon: Icons.login_outlined,
-                          label: 'Dernière modification du profil', // ou 'Dernière authentification' si vous utilisez auth_time du jeton
+                          label: 'Dernière modification du profil',
                           value: MaterialLocalizations.of(context).formatFullDate(lastSignInTime),
                         ),
                       ],
@@ -327,6 +393,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: simpsonsTheme.colorScheme.secondary,
                   foregroundColor: simpsonsTheme.colorScheme.onSecondary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
               const SizedBox(height: 12),
@@ -335,14 +402,26 @@ class _ProfileTabState extends State<ProfileTab> {
                 label: const Text('Déconnexion'),
                 onPressed: () async {
                   await authService.signOut();
-                  // AuthWrapper devrait gérer la redirection
                   if (!mounted) return;
-                  // Forcer la navigation vers le formulaire d'accès est une bonne pratique de fallback
                   Navigator.of(context).pushNamedAndRemoveUntil(Routes.accessForm, (route) => false);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: simpsonsTheme.colorScheme.error,
-                  foregroundColor: simpsonsTheme.colorScheme.onError,
+                  backgroundColor: simpsonsTheme.colorScheme.errorContainer, // Un peu moins agressif
+                  foregroundColor: simpsonsTheme.colorScheme.onErrorContainer,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 12), // Espacement avant le nouveau bouton
+              OutlinedButton.icon( // Utiliser OutlinedButton pour le différencier visuellement
+                icon: const Icon(Icons.delete_forever_outlined),
+                label: const Text('Supprimer mon compte'),
+                onPressed: () {
+                  _showDeleteAccountConfirmationDialog(context, authService);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: simpsonsTheme.colorScheme.error,
+                  side: BorderSide(color: simpsonsTheme.colorScheme.error),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ],

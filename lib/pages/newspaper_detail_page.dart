@@ -61,7 +61,6 @@ class NewspaperDetailPage extends StatelessWidget {
         elevation: 8.0,
         shadowColor: Colors.black87,
         actions: [
-          // Option: Mettre l'icône de partage dans l'AppBar
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () => _shareArticle(context),
@@ -100,7 +99,7 @@ class NewspaperDetailPage extends StatelessWidget {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    article.authorEmail ?? 'Membre de la communauté d\'admin',
+                    article.authorDisplayName ?? 'Membre de la communauté d\'admin',
                     style: textTheme.bodySmall?.copyWith(
                       color: Colors.grey[700],
                     ),

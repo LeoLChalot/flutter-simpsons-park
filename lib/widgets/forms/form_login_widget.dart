@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:simpsons_park/services/auth_service.dart'; // Your AuthService
+import 'package:simpsons_park/services/auth_service.dart';
+
+import 'package:simpsons_park/utils/routes.dart';
 
 class FormLoginWidget extends StatefulWidget {
   final VoidCallback onSwitchToRegister;
@@ -35,24 +37,24 @@ class _FormLoginWidgetState extends State<FormLoginWidget> {
       );
 
       if (!success && mounted) {
-        // Error message is already handled by listening to authService.errorMessage
-        // Or you can show a specific SnackBar here if you prefer
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authService.errorMessage ?? "Login failed. Please try again."),
+            content: Text(authService.errorMessage ?? "Connexion échouée, veuillez réessayer."),
             backgroundColor: Colors.red,
           ),
         );
       }
-
       if(!mounted) return;
-      Navigator.of(context).pop();
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        Routes.appSimpson,
+            (Route<dynamic> route) => false,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Listen to AuthService for isLoading and errorMessage to update UI
     final authService = Provider.of<AuthService>(context);
 
     return Padding(
@@ -63,7 +65,7 @@ class _FormLoginWidgetState extends State<FormLoginWidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text('Login', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+            Text('Connexion', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
             const SizedBox(height: 24),
             TextFormField(
               controller: _emailController,
@@ -71,7 +73,7 @@ class _FormLoginWidgetState extends State<FormLoginWidget> {
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.isEmpty || !value.contains('@')) {
-                  return 'Please enter a valid email';
+                  return 'Veuillez entrer une adresse e-mail valide';
                 }
                 return null;
               },
@@ -79,17 +81,16 @@ class _FormLoginWidgetState extends State<FormLoginWidget> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'Mot de passe', border: OutlineInputBorder()),
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
+                  return 'Veuillez entrer un mot de passe';
                 }
                 return null;
               },
             ),
             const SizedBox(height: 12),
-            // Display error message from AuthService if any
             if (authService.errorMessage != null && !authService.isLoading)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10.0),
@@ -105,12 +106,12 @@ class _FormLoginWidgetState extends State<FormLoginWidget> {
               onPressed: authService.isLoading ? null : _loginUser,
               child: authService.isLoading
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-                  : const Text('Login'),
+                  : const Text('Email'),
             ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: widget.onSwitchToRegister,
-              child: const Text('Don\'t have an account? Register'),
+              child: const Text('Pas encore inscrit ? Inscription'),
             ),
           ],
         ),

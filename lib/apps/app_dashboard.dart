@@ -35,20 +35,20 @@ class _AppDashboardState extends State<AppDashboard> {
       case 'add_character':
         Navigator.pushNamed(context, Routes.addCharacter);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Action: Ajouter Personnage')),
+          const SnackBar(content: Text('Ajouter Personnage')),
         );
         break;
       case 'add_episode':
         Navigator.pushNamed(context, Routes.addEpisode);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Action: Ajouter Épisode')),
+          const SnackBar(content: Text('Ajouter Épisode')),
         );
         break;
       case 'add_newspaper': // Correspond à "Article" dans le SpeedDial
         Navigator.pushNamed(context, Routes.addNewspaper);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Action: Ajouter Article (à implémenter)'),
+            content: Text('Ajouter Article'),
           ),
         );
         break;

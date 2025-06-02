@@ -7,6 +7,7 @@ class Newspaper {
   final String subtitle;
   final String body;
   final String? authorEmail;
+  final String? authorDisplayName;
   final Timestamp createdAt;
 
   Newspaper({
@@ -15,6 +16,7 @@ class Newspaper {
     required this.subtitle,
     required this.body,
     this.authorEmail,
+    this.authorDisplayName,
     required this.createdAt,
   });
 
@@ -24,6 +26,7 @@ class Newspaper {
       'subtitle': subtitle,
       'body': body,
       'authorEmail': authorEmail,
+      'authorDisplayName': authorDisplayName,
       'createdAt': createdAt,
     };
   }
@@ -37,7 +40,9 @@ class Newspaper {
       subtitle: data['subtitle'] as String,
       body: data['body'] as String,
       authorEmail: data['authorEmail'] as String?,
+      authorDisplayName: data['authorDisplayName'] as String?,
       createdAt: data['createdAt'] as Timestamp,
     );
   }
+
 }

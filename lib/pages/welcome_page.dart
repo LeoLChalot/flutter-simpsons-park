@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:simpsons_park/apps/app_dashboard.dart';
 
 import '../apps/app_simpson.dart';
 
@@ -42,7 +41,7 @@ class WelcomePage extends StatelessWidget {
                 'Votre guide ultime de Springfield.',
                 textAlign: TextAlign.center,
                 style: textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onPrimary.withOpacity(0.8),
+                  color: colorScheme.onPrimary.withValues(),
                 ),
               ),
               const SizedBox(height: 50),
